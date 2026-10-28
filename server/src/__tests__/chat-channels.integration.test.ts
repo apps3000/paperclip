@@ -46094,6 +46094,89 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     }
   });
 
+  it("bounds terminal confirmation recovery reads with completed history", async () => {
+    const waiting = await telegramConfirmationRecoveryFixture();
+    const prefix = `confirmation-plan:${randomUUID()}:`;
+    await db.execute(sql`
+      INSERT INTO chat_actions (company_id, endpoint_id, kind, provider_action_id, status)
+      SELECT ${waiting.fixture.companyId}::uuid, ${waiting.endpoint.id}::uuid,
+        CASE WHEN n <= 10000 THEN 'confirmation_response' ELSE 'unrelated_action' END,
+        ${prefix} || n,
+        CASE WHEN n <= 10000 THEN 'processed' ELSE 'processing' END
+      FROM generate_series(1, 20000) AS n
+    `);
+    await db.update(chatActions).set({ status: "processing", result: null })
+      .where(eq(chatActions.id, waiting.acceptAction.id));
+    await db.execute(sql`VACUUM (ANALYZE) chat_actions`);
+    const statements: { sql: string; params: unknown[] }[] = [];
+    const select = db.select.bind(db);
+    const reads = vi.spyOn(db, "select").mockImplementation((...args) => {
+      const selection = select(...args), from = selection.from.bind(selection);
+      vi.spyOn(selection, "from").mockImplementation(table => {
+        const query = from(table);
+        if (table === chatActions) {
+          const execute = query.execute.bind(query);
+          vi.spyOn(query, "execute").mockImplementation(async () => {
+            const statement = query.toSQL();
+            if (statement.sql.includes("'confirmation_response'") && statement.sql.includes("'processing'")) {
+              statements.push(statement);
+            }
+            return execute();
+          });
+        }
+        return query;
+      });
+      return selection;
+    });
+    const errors: unknown[] = [];
+    const coordinator = createDeliveryWorkCoordinator({ owner: db, canRun: () => true,
+      canReconcile: () => true, onError: error => errors.push(error) });
+    try {
+      await waiting.service.registerTerminalConfirmationWork(coordinator, () => true).ready;
+      await vi.waitFor(() => expect(statements.length).toBeGreaterThan(0));
+      const startup = statements[0];
+      const beforeHint = statements.length;
+      await db.transaction(async tx => {
+        await signalDatabaseWork(tx, DELIVERY_QUEUES.chatTerminalConfirmations,
+          JSON.stringify({ companyId: waiting.fixture.companyId }));
+      });
+      await vi.waitFor(() => expect(statements.length).toBeGreaterThan(beforeHint), { timeout: 5_000 });
+      const scoped = statements.at(-1)!;
+      expect(scoped.params).toContain(waiting.fixture.companyId);
+      await coordinator.stop();
+      reads.mockRestore();
+      for (const statement of [startup, scoped]) {
+        expect(await db.$client.unsafe(statement.sql, statement.params as Parameters<typeof db.$client.unsafe>[1]))
+          .toMatchObject([{ id: waiting.acceptAction.id }]);
+        const result = await db.$client.unsafe(
+          `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${statement.sql}`, statement.params as Parameters<typeof db.$client.unsafe>[1],
+        );
+        const plan = result[0]["QUERY PLAN"][0].Plan;
+        type PlanNode = { Plans?: PlanNode[]; [key: string]: unknown };
+        const nodes = (node: PlanNode): PlanNode[] => [node, ...(node.Plans ?? []).flatMap(nodes)];
+        const actionReads = nodes(plan).filter(node => node["Relation Name"] === "chat_actions");
+        expect(actionReads).toHaveLength(1);
+        expect(Number(actionReads[0]["Actual Rows"]) + Number(actionReads[0]["Rows Removed by Filter"] ?? 0),
+          JSON.stringify({ params: statement.params, actionReads }))
+          .toBeLessThanOrEqual(2);
+        expect(Number(actionReads[0]["Shared Hit Blocks"]) + Number(actionReads[0]["Shared Read Blocks"]))
+          .toBeLessThan(20);
+      }
+      await db.update(chatActions).set({ status: "processed" }).where(eq(chatActions.id, waiting.acceptAction.id));
+      await db.execute(sql`ANALYZE chat_actions`);
+      expect(await db.$client.unsafe(scoped.sql, scoped.params as Parameters<typeof db.$client.unsafe>[1])).toHaveLength(0);
+      const empty = await db.$client.unsafe(
+        `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) ${scoped.sql}`, scoped.params as Parameters<typeof db.$client.unsafe>[1],
+      );
+      expect(empty[0]["QUERY PLAN"][0].Plan["Shared Hit Blocks"]
+        + empty[0]["QUERY PLAN"][0].Plan["Shared Read Blocks"]).toBeLessThan(20);
+      expect(errors).toEqual([]);
+    } finally {
+      await coordinator.stop(); reads.mockRestore();
+      await db.delete(chatActions).where(sql`${chatActions.providerActionId} LIKE ${`${prefix}%`}`);
+    }
+  });
+
   it("retains a confirmation committed while another settlement is in flight", async () => {
     const first = await telegramConfirmationRecoveryFixture();
     const second = await telegramConfirmationRecoveryFixture();
