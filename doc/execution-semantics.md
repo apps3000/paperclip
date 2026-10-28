@@ -1377,6 +1377,16 @@ agent, workspace, retained session, and termination of prior execution. The
 checkpoint must match the exact Runner, lease, run, session, turn, and item.
 A missing restart claim does not remove these checks or authorize a fresh session.
 
+After a plugin session passes provider recovery and durable run admission, its
+local suspension receipt is removed. The running session then owns authority;
+the old receipt must not conflict with a later warm run's journal identity.
+Failed admission retains the receipt. Normal suspension writes a new receipt.
+
+A repository-free fresh plugin task directory remains the task's directory on
+ordinary follow-ups. Reuse requires its exact company, task, workspace, provider
+owner, fresh-attempt identity and path. Mode-only isolation settings do not turn
+that directory into a Git worktree. Explicit strategy settings still apply.
+
 A prepared remote workspace interrupted before the executor's first durable
 claim may resume its untouched bootstrap on the same run. This requires attempt
 and controller generation zero, no prior owner, and no process, provider session,
