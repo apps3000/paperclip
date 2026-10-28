@@ -126,7 +126,7 @@ This proves the changed worker can become quiet and reactivate. It does not prov
 host or database suspension, extend the Cloud alarm contract, or relax idle-safety
 blockers. The scheduler cannot wake stopped compute by itself. Other run reaper
 queries, scheduled retry dispatch, task recovery, and the original inventory remain
-unfinished. This slice and its parent stack are not authorized for merge.
+unfinished. At initial authoring, this slice and its parent stack were not authorized for merge. The later stack campaign authorizes an ordinary protected merge only after exact-current-head Greptile 5/5, clean CI, and resolution of required review findings.
 
 Final combined owner acceptance passed all 164 tests in five suites, with no
 skips, in 41.14 seconds using separate dispatch and recovery databases. Together
@@ -161,3 +161,58 @@ the overlapping upstream recovery fixture imports and connection variable.
 The first targeted test command used an invalid project filter and ran no tests;
 the corrected command established the failing baseline before the fix. These are
 local behavior checks, not a full-repository or deployed-sleep claim.
+
+
+## Current stack acceptance (2026-10-28)
+
+The current source acceptance ran at `e3a2472fe375f53158fd591d0eaf96ae8130474b`.
+All ten complete test files passed: **362 cases, no skips**, in 72.12 seconds.
+Counts are taken from the verbose passing case records, not from a name filter:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| Scheduled-retry HTTP routes and worker | 30 |
+| Heartbeat recovery | 45 |
+| Heartbeat run control | 51 |
+| PostgreSQL dispatch adapter | 69 |
+| Heartbeat queue | 32 |
+| Heartbeat run lifecycle | 31 |
+| Native cancellation parser and admission | 32 |
+| Native cancellation integration | 16 |
+| Cancellation provenance | 5 |
+| Server startup and feedback export | 51 |
+
+Routes, recovery, run control, dispatch, and queue each used a different fresh
+disposable PostgreSQL database. They were migrated before starting the tests.
+Lifecycle and native integration retained their real embedded PostgreSQL fixtures.
+The earlier dispatch foreign-key cleanup failure remains recorded above; sharing
+that database with run-control fixtures was not repeated. No tests were disabled
+and no production behavior was changed to accommodate the fixtures.
+
+Database build, server typecheck, server build, module boundaries, migration order,
+and all five fresh database migrations passed. The only draft migration owned
+by this slice was regenerated as `0404_cynical_phil_sheldon.sql` after the verified
+parent history. Its original partial-index definition is unchanged. It uses
+concurrent, idempotent creation through the existing top-level migration path.
+All prior SQL and journal entries, and all retained parent snapshots, are preserved;
+the five newest snapshots are 0400 through 0404. No new table is added.
+
+A populated parent database upgraded from 0403 to 0404. All 402 existing migration
+receipts remained identical; exactly one receipt was appended. Replaying appended
+none. The scheduled-retry cancellation index is valid and ready on both that
+upgraded database and a freshly migrated database.
+
+The latest normal parent integration is
+`a1ae3be691e00cae4556c16f84a271ea6425864c`, carrying #17666 at
+`836acef0370d42323fdfdbd6d62a805b2469f1d4`. The complete server, package, and UI
+source trees and every owned source hash still match the tested revision. The
+complete owned binary patch is identical against the corresponding parent tree.
+The only carried changes are parent audits and unrelated onboarding smoke tests
+and their feature map, with exact upstream bytes preserved. The parent startup
+inspection correction is superseded by #17666's removal of that coordinator;
+this slice does not restore the obsolete inspection.
+
+These results establish this worker's behavior and integration, not deployed host
+or database suspension. Final publication still needs the actual landed parent
+ancestry, then fresh current-head review and CI. Existing reviews on earlier heads
+do not count for the eventual merge.
