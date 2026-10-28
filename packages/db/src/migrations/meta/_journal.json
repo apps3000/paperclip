@@ -2780,13 +2780,6 @@
       "when": 1793060791742,
       "tag": "0398_breezy_mongu",
       "breakpoints": true
-    },
-    {
-      "idx": 399,
-      "version": "7",
-      "when": 1793060791743,
-      "tag": "0399_colorful_darkstar",
-      "breakpoints": true
     }
   ]
 }
