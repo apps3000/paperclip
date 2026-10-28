@@ -515,3 +515,43 @@ is `/tmp/sleep30-discovery-{red,green}.log`, and acceptance logs/status receipts
 are `/tmp/sleep30-discovery-final-{consumers,notices,retries}.*`.
 The earlier 264-case acceptance retains its original revision scope. None of
 these runs establishes full local repository acceptance or deployed sleep.
+
+
+### Review repair: restore ordinary Retry input in its notifying transaction
+
+The fresh review of `661f2f6da8c6c22cdcc25edccd57502ee6fa8c4b` reports
+[restored input stays silent](https://github.com/paperclipai/paperclip/pull/17647#discussion_r4404007181),
+P1/4 out of 5. Earlier retry admission and denial notifications do not cover
+`releaseUnadmittedTaskRetryInput`: reconciliation invokes this owner after the
+failed action settles, and its separate transaction restores coalesced ordinary
+receipts to deferred status. A consumed earlier wake cannot cover that later
+commit. The earlier writer audit missed this restoration transaction.
+
+The restoration owner now awaits the existing company/task notice intent after
+its action/issue/receipt guards and before updating the ordinary receipts. The
+same transaction restores input and retires its unadmitted task Retry intent.
+No guard, source authority, table, scheduler or per-caller wrapper is added.
+
+The causal regression seeds an unadmitted failed Retry owner and uses the real
+input-claim transaction on supported ordinary chat input. It starts the actual
+notice coordinator, consumes an earlier committed scope wake, and observes no
+notice and two virtual minutes without select/transaction calls. Calling the
+real release owner then exposes the restored row. Before the fix, the test fails
+because this transaction emitted no intent. After the fix, intent/settlement and
+the queued publication appear, and the coordinator settles without a deadline.
+This is real PostgreSQL producer/consumer boundary proof with seeded durable
+Retry-refusal state, not a complete public Retry request failure walkthrough.
+The separate existing GitHub Retry compatibility cases exercise supported flows.
+
+Current restoration acceptance passes **126 distinct selected cases**: 54
+ordinary-notice/FIFO/producer cases (1,598 skipped) and 72 separate retry/budget
+cases (1,580 skipped), using fresh independent databases. Server typechecking,
+build and module boundaries pass. The prior 267-case discovery matrix retains
+its original revision scope; unchanged complete consumer suites are not counted
+as freshly rerun for this two-line producer hook.
+Commands/fixtures: `/tmp/sleep30-restore-input-final-acceptance-command.json`.
+The valid missing-intent failure remains in `/tmp/sleep30-restore-input-red.log`;
+final results/exit receipts are `/tmp/sleep30-restore-input-final-{notices,retries}.*`
+and `/tmp/sleep30-restore-input-{types,build,boundaries}.*`.
+Fresh current-head remote CI and Greptile 5/5 remain mandatory. No full local
+repository acceptance, live provider wake or physical suspension is claimed.

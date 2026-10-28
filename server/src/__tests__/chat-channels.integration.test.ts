@@ -8,6 +8,7 @@ import { cloudActorHeaderSourceFromHeaders, resolveCloudTenantActor } from "../m
 import { cloudTenantPrimaryCompanyId } from "../services/cloud-instance.js";
 import { accessService } from "../services/access.js";
 import { signalDatabaseWork, subscribeDatabaseWork } from "@paperclipai/db";
+import { claimTaskRetryInput, releaseUnadmittedTaskRetryInput } from "../services/chat-channels/task-retry-input.js";
 import { restoreNativeChatReviewPresentationInTransaction } from "../services/native-runtime/native-chat-review-presentation.js";
 import { notifyChatEndpointConfiguration, notifyChatCompanyConfiguration } from "../services/chat-channels/configuration-work-notifications.js";
 import { deleteCompany } from "../services/company-deletion.js";
@@ -74379,6 +74380,63 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       await context.service.shutdown(); await other.service.shutdown();
       await db.delete(chatActions).where(inArray(chatActions.id, [...rejectedIds, context.action.id]));
       await db.delete(agentWakeupRequests).where(inArray(agentWakeupRequests.id, [...rejectedIds, context.action.id]));
+    }
+  });
+
+  it("reactivates restored ordinary input after an earlier Retry notice wake is consumed", async () => {
+    const context = await deferredChatQueueFixture();
+    const retryId = randomUUID(), intentId = randomUUID();
+    const scope = { companyId: context.fixture.companyId, issueId: context.conversation.issueId };
+    const errors: unknown[] = [], events: string[] = [];
+    const coordinator = createDeliveryWorkCoordinator({ owner: db, canRun: () => true,
+      canReconcile: () => true, onError: error => errors.push(error) });
+    let unsubscribe = () => {};
+    try {
+      const [receipt] = await readAgentWakeupRequestsById(context.action.id);
+      await db.insert(chatActions).values({ ...context.action, id: retryId,
+        kind: "failed_run_retry", status: "failed", providerActionId: `task-retry-restore:${retryId}`,
+        payload: { issueId: scope.issueId, taskRetryIntentId: intentId },
+      });
+      await db.insert(agentWakeupRequests).values({ ...receipt, id: retryId, status: "failed",
+        idempotencyKey: `task-retry-restore:${retryId}`,
+      });
+      await db.transaction(tx => claimTaskRetryInput(tx, { companyId: scope.companyId,
+        retryActionId: retryId, sourceActionIds: [context.action.id] }));
+      expect((await readAgentWakeupRequestsById(context.action.id))[0]).toMatchObject({
+        status: "coalesced", runId: null, payload: { coalescedIntoWakeupRequestId: retryId },
+      });
+      vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"], shouldAdvanceTime: true });
+      const settle = async () => vi.waitFor(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(idleWorkSnapshot().active).toBe(0); expect(coordinator.nextWakeAt()).toBeNull();
+      }, { timeout: 10_000 });
+      await chatInboundWakeNoticeWork(context.service).register(coordinator, () => true).ready;
+      await db.transaction(tx => signalDatabaseWork(tx, DELIVERY_QUEUES.chatInboundWakeNotices, JSON.stringify(scope)));
+      await settle();
+      expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([]);
+      const select = vi.spyOn(db, "select"), transaction = vi.spyOn(db, "transaction");
+      try {
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(select).not.toHaveBeenCalled(); expect(transaction).not.toHaveBeenCalled();
+      } finally { select.mockRestore(); transaction.mockRestore(); }
+      unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+        if ([...scopes ?? []].some(value => value !== "*" && JSON.parse(value).companyId === scope.companyId)) events.push(event);
+      });
+      await releaseUnadmittedTaskRetryInput(db, { companyId: scope.companyId, retryActionId: retryId });
+      expect((await readAgentWakeupRequestsById(context.action.id))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+      expect(events).toContain("intent"); expect(events).toContain("settled");
+      await vi.waitFor(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([expect.objectContaining({
+          commentId: context.action.payload.commentId, payload: { text: "Your follow-up is queued.", progressState: "queued" },
+        })]);
+        expect(coordinator.nextWakeAt()).toBeNull(); expect(idleWorkSnapshot().active).toBe(0);
+      }, { timeout: 10_000 });
+      expect(errors).toEqual([]);
+    } finally {
+      unsubscribe(); await coordinator.stop(); vi.useRealTimers(); await context.service.shutdown();
+      await db.delete(chatActions).where(eq(chatActions.id, retryId));
+      await db.delete(agentWakeupRequests).where(eq(agentWakeupRequests.id, retryId));
     }
   });
 
