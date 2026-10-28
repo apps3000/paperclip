@@ -65178,6 +65178,58 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     }
   });
 
+  it.each(["task", "company", "startup"] as const)("bounds failed retry notice scope discovery with retained candidates (%s)", async mode => {
+    const context = await failedChatRetryFixture("telegram");
+    const other = await failedChatRetryFixture("telegram");
+    const copiedIds = Array.from({ length: 250 }, () => randomUUID());
+    const stagedIds: string[] = [];
+    try {
+      for (const target of [context, other]) {
+        const staged = await db.transaction(tx => target.service.prepareFailedChatRunRetry(tx, {
+          companyId: target.fixture.companyId, issueId: target.issue.id,
+          agentId: target.fixture.assignedAgentId, failedRunId: target.runId, initiatedByUserId: "owner-user",
+        }));
+        await target.service.processFailedChatRunRetry(staged.actionId);
+        await db.update(agentWakeupRequests).set({ status: "deferred_issue_execution" })
+          .where(eq(agentWakeupRequests.id, staged.actionId));
+        stagedIds.push(staged.actionId);
+      }
+      const [action] = await db.select().from(chatActions).where(eq(chatActions.id, stagedIds[0]));
+      const [receipt] = await readAgentWakeupRequestsById(stagedIds[0]);
+      await db.insert(chatActions).values(copiedIds.map(id => ({
+        ...action, id, providerActionId: `failed_run_retry:${id}`,
+      })));
+      await db.insert(agentWakeupRequests).values(copiedIds.map(id => ({
+        ...receipt, id, idempotencyKey: `retry-discovery-budget:${id}`,
+      })));
+      const scope = { companyId: context.fixture.companyId, issueId: context.issue.id };
+      const events: Array<Record<string, unknown>> = [], now = Date.now();
+      const capture = createDatabaseResponseCapture({ start: now - 1, end: now + 59_000 }, event => events.push(event));
+      installDatabaseResponseCapture(db, { chatActions, agentWakeupRequests }, capture);
+      let scopes: Array<{ companyId: string; issueId: string }>;
+      try {
+        scopes = await context.service.loadFailedRetryNoticeScopes(
+          mode === "task" ? scope : mode === "company" ? { companyId: scope.companyId } : undefined,
+        );
+      } finally { capture.flush(); }
+      if (mode === "startup") {
+        expect(scopes).toEqual(expect.arrayContaining([scope, {
+          companyId: other.fixture.companyId, issueId: other.issue.id,
+        }]));
+      } else {
+        expect(scopes).toEqual([scope]);
+      }
+      expect(events.at(-1)).toMatchObject({ startedQueries: mode === "task" ? 0 : 1,
+        completedQueries: mode === "task" ? 0 : 1, inFlightAtEnd: 0 });
+      expect(events.filter(event => event.event === "paperclip.db_response_capture.entry.v1")
+        .reduce((count, event) => count + Number(event.rows), 0)).toBe(mode === "task" ? 0 : scopes.length);
+    } finally {
+      await context.service.shutdown(); await other.service.shutdown();
+      await db.delete(chatActions).where(inArray(chatActions.id, copiedIds));
+      await db.delete(agentWakeupRequests).where(inArray(agentWakeupRequests.id, copiedIds));
+    }
+  });
+
   it("scopes failed retry notices and retains receipt contention without retrying settled history", async () => {
     const context = await failedChatRetryFixture("telegram");
     const other = await failedChatRetryFixture("telegram");
@@ -65211,7 +65263,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       release(); await holder;
       expect(await context.service.reconcileFailedRetryNotices({ scope }))
         .toEqual({ inserted: 1, contended: false, nextCursor: null });
-      expect(await context.service.loadFailedRetryNoticeScopes(scope)).toEqual([]);
+      expect(await context.service.loadFailedRetryNoticeScopes({ companyId: scope.companyId })).toEqual([]);
       expect(await readChatPublicationsByEndpointId(other.endpoint.id)).toEqual([]);
       await db.update(agentWakeupRequests).set({ status: "cancelled" })
         .where(eq(agentWakeupRequests.id, staged[0].actionId));
@@ -65222,7 +65274,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       })]));
       expect(await context.service.reconcileFailedRetryNotices({ scope }))
         .toEqual({ inserted: 0, contended: false, nextCursor: null });
-      expect(await context.service.loadFailedRetryNoticeScopes(scope)).toEqual([]);
+      expect(await context.service.loadFailedRetryNoticeScopes({ companyId: scope.companyId })).toEqual([]);
       await db.update(agentWakeupRequests).set({ runId: other.runId })
         .where(eq(agentWakeupRequests.id, staged[1].actionId));
       expect(await other.service.loadFailedRetryNoticeScopes({ companyId: other.fixture.companyId })).toEqual([]);
