@@ -308,3 +308,72 @@ acceptance, fresh exact-head CI and Greptile 5/5 without actionable findings are
 still required. No full local repository, live provider or deployed sleep result
 is inferred from this preparation. The following audit-only commit leaves the
 compiled source and migration bytes unchanged.
+
+
+## Current prepared-parent functional acceptance
+
+Normal integration `aa72f32641b2e2c680342cd49477272349aca9db` adopts published
+GitHub acknowledgement parent `09ca00b9f029838434ec042cda691345d67b493e`.
+The complete original owned binary patch and all inherited master changes are
+preserved. Proof: `/tmp/sleep35-published-parent-composition-proof.json`.
+
+**304 distinct cases pass:** all 253 GitHub agent-review workflow cases (1,485
+other chat cases skipped), all 30 heartbeat completion cases, all eight cases
+across the complete real/unit issue-tree control suites, and all 13 startup
+cases. Database build, server typechecking/build, module boundaries and three
+fresh PostgreSQL migrations through 0401 pass. The control suite is explicitly
+premigrated, preserving its original setup budget. Commands and actual fixtures:
+`/tmp/sleep35-current-acceptance-command.json`; receipts/logs:
+`/tmp/sleep35-current-{db-build,types,build,boundaries,github,completion,tree,startup}.*`
+and `/tmp/sleep35-current-migrate-{github,completion,tree}.*`.
+These results retain that prepared-parent revision scope.
+
+
+## Acceptance on the landed GitHub parent and current master
+
+GitHub acknowledgements #17656 landed at
+`ba5bba86dcdde32b14d4d7dec1b51898e5f6f22d`. Its entire tree is byte-identical
+to the published parent `09ca00b9f029838434ec042cda691345d67b493e`.
+Master then added the queued-comment consumption optimization #18021.
+Normal two-parent integration `3c8339a541bf68bc9957b9d5a8df80d3a7c3452d`
+adopts master `52b86c2032a189b0ea259c5b0cb7158b07ef788c`. It preserves the full
+24-path owned binary patch and all five new master paths. Both normal parents
+and the exact tree are checked, including historical squash-ancestry resolution
+against the verified published parent. Proof:
+`/tmp/sleep35-landed-parent-publication-proof.json`. No force push or rebase occurs.
+
+**74 distinct current cases pass:** all 17 terminal-response lifecycle/producer
+cases (1,721 other chat cases skipped), all six queued-comment consumption
+regressions for the new upstream optimization, all 30 heartbeat completion cases,
+all eight real/unit issue-tree control cases and all 13 startup cases. Database
+build, server typechecking/build, module boundaries, four fresh PostgreSQL
+migrations through 0401 and the current-master migration-order gate pass.
+The repeated 68 cases are not added to the earlier 304-case matrix; its full
+GitHub group remains evidence at its stated revision.
+
+The terminal cases cover finalized-history quiet, deleted Board sources, pending
+presentation and passive results, outer rollback/commit, paused/new runs,
+restart/drain/standby, native identity, lease waits, unrelated full-page history,
+uncertain publication ownership and tree/workspace/exhausted-recovery producers.
+The six new upstream tests cover bounded repeated reads and preserve saved-comment
+JSON, identity, scope, author and cancellation semantics in the execution blocker.
+
+A populated 0400 database upgrades to 0401 with all 399 prior migration receipts
+identical and exactly one new receipt. Replay adds none. The terminal index is
+valid and ready in both fresh and upgraded databases. The original SQL index
+definition is unchanged apart from generation whitespace and filename references.
+All prior SQL/journal entries and retained snapshot bytes remain preserved;
+canonical retention keeps snapshots 0397–0401. Receipt:
+`/tmp/sleep35-upgrade-replay-receipt.json`.
+
+Actual commands, revision and fixtures:
+`/tmp/sleep35-landed-acceptance-command.json`. Logs/receipts:
+`/tmp/sleep35-landed-{db-build,types,build,boundaries,github,queued,completion,tree,startup}.*`,
+`/tmp/sleep35-landed-migrate-{github,queued,completion,tree}.*`,
+`/tmp/sleep35-landed-migration-order.*`, and `/tmp/sleep35-upgrade-replay.*`.
+The following audit-only follow-up leaves all owned source/test/migration hashes
+unchanged, in `/tmp/sleep35-landed-tested-source-sha256.json`.
+Original producer, quietness, failure-isolation, skipped-suite and presentation
+results above retain their original scopes. Fresh exact-head CI and Greptile 5/5
+with no actionable findings remain required. This does not establish a full
+local repository result, live GitHub delivery or physical host/database sleep.
