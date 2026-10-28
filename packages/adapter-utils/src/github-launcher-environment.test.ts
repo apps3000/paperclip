@@ -317,7 +317,6 @@ describe("managed GitHub launcher environment", () => {
   it("saves local commits through staged sandbox shells without author setup", async () => {
     const fixture = await sandbox("usr/bin");
     await rm(path.join(fixture.bin, "git"));
-    // Poison the image's global identity. Managed execution must not inherit it.
     await writeFile(path.join(fixture.root, ".gitconfig"), "[user]\nname = Image User\nemail = image@example.test\n");
     const env = await prepareGitHubOperationLaunchers({
       runId: "default-local-author", target: fixture.target, cwd: fixture.root,
@@ -329,7 +328,6 @@ describe("managed GitHub launcher environment", () => {
       return result.stdout.trim();
     };
     await command("git init -q && printf 'first\\n' > work.txt && git add work.txt && git commit -qm first");
-    // A second shell reuses the staged environment, with no manual Git setup.
     await command("printf 'second\\n' >> work.txt && git add work.txt && git commit -qm second");
     expect(await command("git log --format='%an <%ae>|%cn <%ce>'"))
       .toBe(Array(2).fill("Paperclip <noreply@paperclip.ing>|Paperclip <noreply@paperclip.ing>").join("\n"));

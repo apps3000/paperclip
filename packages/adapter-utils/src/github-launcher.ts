@@ -44,8 +44,6 @@ async function main() {
     configDirectory = fs.mkdtempSync(path.join(configRoot, 'paperclip-github-operation-'));
     fs.chmodSync(configDirectory, 0o700);
     process.once('exit', () => { try { fs.rmSync(configDirectory, { recursive: true, force: true }); } catch {} });
-    // A generic local author is not a GitHub credential. Keep it in private
-    // global config so repository/-c settings and captured managed identity win.
     fs.writeFileSync(path.join(configDirectory, 'gitconfig'), '[user]\n\tname = Paperclip\n\temail = noreply@paperclip.ing\n', { mode: 0o600 });
     configReady = true;
   } catch { diagnostic('configuration_directory_unavailable'); }
@@ -57,9 +55,6 @@ async function main() {
       GH_CONFIG_DIR: configDirectory, SSH_AUTH_SOCK: '',
       GIT_CONFIG_GLOBAL: configReady ? path.join(configDirectory, 'gitconfig') : '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null',
       GIT_TERMINAL_PROMPT: '0',
-      // The inherited identity was deleted above. Empty identity env values
-      // override even explicit repository/command config and break local commits.
-      // The private default supplies an author without guessing the OS user's details.
       GIT_CONFIG_COUNT: '5', GIT_CONFIG_KEY_0: 'credential.helper', GIT_CONFIG_VALUE_0: '',
       GIT_CONFIG_KEY_1: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_1: 'git@github.com:',
       GIT_CONFIG_KEY_2: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_2: 'ssh://git@github.com/',

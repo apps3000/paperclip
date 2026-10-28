@@ -36,7 +36,6 @@ describe("managed GitHub launchers", () => {
     await writeFile(path.join(root, "work.txt"), "saved work\n");
     await exec(path.join(bin, "git"), ["add", "work.txt"], { cwd: root, env });
     await exec(path.join(bin, "git"), ["commit", "-m", "Save local work"], { cwd: root, env });
-    // Inspect the stored commit with real Git, independently of launcher output.
     expect((await exec("git", ["-C", root, "log", "-1", "--format=%an <%ae>|%cn <%ce>"])).stdout.trim())
       .toBe("Paperclip <noreply@paperclip.ing>|Paperclip <noreply@paperclip.ing>");
     expect((await exec("git", ["-C", root, "show", "HEAD:work.txt"])).stdout).toBe("saved work\n");
@@ -54,7 +53,6 @@ describe("managed GitHub launchers", () => {
       GH_TOKEN: "host-token", GIT_AUTHOR_NAME: "Host", GIT_COMMITTER_NAME: "Host",
     }, { url: "", token: "" }), PATH: `${bin}:${process.env.PATH}` };
     const git = async (...args: string[]) => (await exec(path.join(bin, "git"), args, { cwd: root, env })).stdout.trim();
-    // No configured identity uses the private default, never the host user's.
     expect(await git("var", "GIT_AUTHOR_IDENT")).toMatch(/^Paperclip <noreply@paperclip.ing>/);
     expect(await git("var", "GIT_COMMITTER_IDENT")).toMatch(/^Paperclip <noreply@paperclip.ing>/);
     if (identitySource === "repository") {
