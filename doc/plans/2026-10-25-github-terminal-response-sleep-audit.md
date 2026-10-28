@@ -274,3 +274,37 @@ cases plus two worker cases: quiet pending presentation, rolled-back settlement,
 committed passive or missing-response settlement, and final drain. The fixture
 uses real PostgreSQL with controlled GitHub responses. The new cases must pass
 before this integration is published; source merging alone is not acceptance.
+
+
+## Current local preparation — October 28
+
+Normal integration `ed1c9fcfa10d492bb56ea2e23cd97cddeebe9d5b` adopts the prepared
+GitHub acknowledgement parent `3fef8f08c0337301706bc6348a05bb2a2fc50679`.
+Every original domain/schema edit and unrelated parent blob is preserved.
+The only conflict is a historical snapshot rename/delete; it retains the current
+parent's 0396 snapshot byte for byte. The parent migration/client state is
+identical before this slice's index is regenerated. Proof:
+`/tmp/sleep35-parent-composition-proof.json`.
+
+`706cb6dbf58bf42a5f611319994c2c3907c9a80f` regenerates the original terminal
+work index as `0401_yummy_ultimates.sql`. Its concurrent/idempotent index SQL is
+identical after whitespace normalization to the old unlanded 0395 definition.
+All prior SQL/journal entries and retained snapshot bytes remain unchanged.
+Canonical generation keeps the five newest snapshots, 0397–0401. The existing
+top-level migration registry uses the new filename.
+
+The exact parent-to-head migration-order gate, database build and production
+server typechecking pass on that revision. Commands/receipts:
+`/tmp/sleep35-current-compile-command.json` and
+`/tmp/sleep35-current-{order,db-build,types}.*`.
+These are compilation/history checks, not current lifecycle or PostgreSQL
+migration-application acceptance. No current test count is claimed here.
+The earlier lifecycle, quietness, provider, failure-isolation and presentation
+results above retain their original revision scopes.
+
+This remains local and unpublished while preceding PRs finish their required
+gates and merges. Actual landed-parent reconciliation, relevant functional
+acceptance, fresh exact-head CI and Greptile 5/5 without actionable findings are
+still required. No full local repository, live provider or deployed sleep result
+is inferred from this preparation. The following audit-only commit leaves the
+compiled source and migration bytes unchanged.
