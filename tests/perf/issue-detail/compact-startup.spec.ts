@@ -8,15 +8,14 @@ test.use({ video: "on", trace: "retain-on-failure", serviceWorkers: "block", vie
 let fixture: { id: string; identifier: string; prefix: string; oldestCommentId: string };
 const fixturePath = path.resolve("test-results/compact-startup-fixture.json");
 test.beforeAll(async ({ request }) => {
-  try {
-    const saved = JSON.parse(await fs.readFile(fixturePath, "utf8"));
-    if ((await request.get(`/api/issues/${saved.id}`)).ok()) {
-      fixture = saved;
-      const summary = await request.put(`/api/issues/${fixture.id}/documents/continuation-summary`, { data: { title: "Continuation summary", format: "markdown", body: "# Continuation summary\n\nSaved handoff evidence." } });
-      expect(summary.ok()).toBeTruthy();
-      return;
-    }
-  } catch { /* A fresh local instance needs its own synthetic task. */ }
+  const saved = await fs.readFile(fixturePath, "utf8").then(text => JSON.parse(text)).catch(() => null);
+  if (saved) {
+    const existing = await request.get(`/api/issues/${saved.id}`);
+    if (existing.ok()) { fixture = saved; return; }
+    // A different disposable instance needs a new fixture. Server failures
+    // must fail the test rather than silently creating another company.
+    expect(existing.status(), await existing.text()).toBe(404);
+  }
   const company = await (await request.post("/api/companies", { data: { name: "Task loading reproduction" } })).json();
   const response = await request.post(`/api/companies/${company.id}/issues`, { data: {
     title: "Review the latest investigation", status: "backlog", description: "Investigate the latest reported pattern and keep the saved evidence together.",
