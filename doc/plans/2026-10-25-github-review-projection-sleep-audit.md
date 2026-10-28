@@ -131,3 +131,39 @@ The audit-only follow-up preserves the accepted source, tests, and migration
 hashes. Fresh remote checks and exact-current-head Greptile review remain required.
 This acceptance does not prove deployed host/database suspension or extend Cloud
 alarm coverage. The separate missed-webhook obligation remains for the next slice.
+
+
+## Browser CI clipboard read repair (October 28)
+
+Head `1453a4447c0d4d33f713ae3e00734c7950f95426` received fresh Greptile 5/5 with
+no findings. Its browser shard 7 failed twice in the lost-creation-response YAML
+journey: the clipboard helper copied page text beginning with “Skip to Main
+Content” and tried to parse it as YAML. The second failure followed the single
+allowed unchanged-code retry. All three initial isolated local repetitions passed
+with retries disabled and original budgets; that did not establish resolution.
+The entire UI, failing test, Playwright config, and lockfile match the green parent.
+
+The CI failure artifact shows the main region focused and the YAML editor not
+focused. A one-shot native focus change to main during Copy, with whole-page
+selection, reproduced the identical parser failure in the real browser. The exact
+actor and timing that changed focus in CI were not captured; no infrastructure
+cause is inferred from the earlier local passes.
+
+The shared test read helper now clears stale clipboard data, clicks the actual
+editor, and repeats the read-only copy gesture within the existing expectation
+budget until a fresh canonical YAML header is present. YAML parsing still runs,
+and every journey body, persistence assertion, command counter, and test deadline
+is unchanged. This changes the browser fixture, not production background work.
+
+The controlled focus-loss probe failed before the repair and passed afterward.
+The temporary fault was removed before acceptance. All six complete agent YAML
+configuration journeys then passed with zero retries in 50.9 seconds. This includes
+real resource writes, partial/lost responses, non-replayed creation commands,
+conflict handling, destination instructions, and revision restore.
+
+Only the central test read helper and this verification note change after the
+reviewed head. Entire server, package, and UI source trees remain identical.
+The earlier 287-case backend acceptance therefore retains the same source bytes.
+Fresh current-head CI and Greptile review are required for this repair; the old
+head's score does not satisfy that gate. Both earlier CI failures remain recorded
+in run 40777754306, including attempts 1 and 2, and its failed-job artifacts.
