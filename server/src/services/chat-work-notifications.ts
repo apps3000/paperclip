@@ -1,4 +1,3 @@
-import { notifyChatResponseAvailability } from "./chat-response-availability.js";
 import { notifyChatRunMilestones } from "./chat-run-milestone-notifications.js";
 import { notifyChatConnectionConfiguration } from "./chat-channels/configuration-work-notifications.js";
 import { DELIVERY_QUEUES, notifyDeliveryWork } from "./delivery-work-notifications.js";
@@ -18,7 +17,6 @@ export async function notifyChatPublicationWork(
   // release its provider response slot. Callers supply the affected issue only
   // for those changes; transport claim/lease bookkeeping has no projection debt.
   if (milestoneScope?.issueId) {
-    await notifyChatResponseAvailability(tx, { companyId: milestoneScope.companyId, issueId: milestoneScope.issueId });
     await notifyChatRunMilestones(tx, { companyId: milestoneScope.companyId, issueId: milestoneScope.issueId });
   }
 }

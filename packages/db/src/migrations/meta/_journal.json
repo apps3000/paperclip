@@ -2787,13 +2787,6 @@
       "when": 1793218102114,
       "tag": "0399_ambitious_onslaught",
       "breakpoints": true
-    },
-    {
-      "idx": 400,
-      "version": "7",
-      "when": 1793218595176,
-      "tag": "0400_absent_phantom_reporter",
-      "breakpoints": true
     }
   ]
 }

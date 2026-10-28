@@ -1,4 +1,3 @@
-import { notifyChatResponseAvailability } from "../../chat-response-availability.js";
 import { notifyChatEndpointConfiguration } from "../configuration-work-notifications.js";
 import { notifyChatConnectionHealth } from "../connection-health-notifications.js";
 import { isOutboundAttachmentHydrationError, isOutboundAttachmentValidationError } from "../outbound-attachments.js";
@@ -122,7 +121,6 @@ export function createChatPublicationFailures(db: Db, options: PublicationFailur
               ? "cancelled"
               : "failed";
       await notifyChatPublicationWork(tx, state === "failed" || state === "cancelled" ? publication : undefined);
-      if (state === "retry" || state === "delivery_unknown") await notifyChatResponseAvailability(tx, publication);
       const [ownedPublication] = await tx
         .update(chatPublications)
         .set({

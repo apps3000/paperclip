@@ -81,8 +81,6 @@ export const fastResponseRequests = pgTable(
       t.companyId,
       t.sourceKey,
     ),
-    delivery: index("fast_response_requests_delivery_idx").on(t.companyId, t.endpointId, t.deliveryId)
-      .where(sql`${t.deliveryId} is not null`),
     history: index("fast_response_requests_history_idx").on(
       t.companyId,
       t.acceptedAt,
