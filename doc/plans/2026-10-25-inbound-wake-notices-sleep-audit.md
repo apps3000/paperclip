@@ -456,3 +456,27 @@ revision scope and are not added to 264. This completes the named producer audit
 for this owner; actual landed-parent reconciliation and fresh exact-head CI/review
 remain publication and merge gates. There is no full local repository matrix,
 live provider tenant, external-alarm, physical suspension, or savings claim.
+
+
+### Acceptance on actual landed master
+
+The final normal ancestry merge is `875a6ee8d211cba7f0499aace7fcea7f6880c4a2`,
+based on actual master `b14e1ecaf85ce6eafa05125f1b539e3ac7f32022`, after
+cancellation #17895 merged. The complete 22-path notice patch is binary-identical
+across that integration and all 58 unrelated master paths are preserved.
+
+Master added agent YAML configuration/shared types, bounded upgrade admission,
+and runner human-input contracts. Patch identity alone does not establish their
+combined runtime behavior. Updated shared dependencies, server typechecking,
+build, and module boundaries pass. The same **264 distinct cases** then pass
+again on this actual combined revision: 142 complete consumer cases, 50 selected
+notice cases, and 72 separate retry/budget cases, using new isolated databases.
+The selected skipped counts remain 1,598 and 1,576 respectively. These repeated
+runs do not represent 528 different tests.
+
+Exact commands, revision, and actual fixtures are in
+`/tmp/sleep30-landed-acceptance-command.json`; logs and zero exit receipts are
+`/tmp/sleep30-landed-{shared-build,types,build,boundaries,consumers,notices,retries}.*`.
+All 20 owned source/test hashes remain unchanged from the recorded acceptance
+manifest. The only subsequent publication edit adds this documentation. Fresh
+remote current-head CI and review remain required before protected merge.
