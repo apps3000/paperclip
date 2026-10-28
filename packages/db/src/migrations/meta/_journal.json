@@ -2829,6 +2829,13 @@
       "when": 1793230635900,
       "tag": "0405_petite_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 406,
+      "version": "7",
+      "when": 1793230818753,
+      "tag": "0406_gigantic_sunfire",
+      "breakpoints": true
     }
   ]
 }
