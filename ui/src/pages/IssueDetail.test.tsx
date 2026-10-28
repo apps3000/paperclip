@@ -1857,6 +1857,25 @@ describe("IssueDetail", () => {
     }
   });
 
+  it("retains a linked older comment when opening a document without moving the preview cursor", async () => {
+    queryClient.setQueryData(["issues", "history-expanded", "PAP-1"], false);
+    mockLocation.hash = "#comment-old-comment";
+    mockIssuesApi.get.mockResolvedValue(createIssue());
+    const recent = createIssueComment({ id: "recent-comment", body: "Latest reply" });
+    const older = createIssueComment({ id: "old-comment", body: "Read my saved evidence" });
+    mockIssuesApi.getComment.mockResolvedValue(older);
+    mockIssuesApi.recentComments.mockResolvedValue({ comments: [recent], latestCommentId: recent.id, hasMore: true });
+    await act(async () => renderIssueView());
+    const props = () => mockIssueChatThreadRender.mock.calls.at(-1)![0];
+    await waitForAssertion(() => expect(props().comments).toEqual(expect.arrayContaining([expect.objectContaining({ id: older.id })])));
+    mockLocation.hash = "#document-qa-evidence";
+    await act(async () => renderIssueView());
+    await waitForAssertion(() => expect(props().comments).toEqual(expect.arrayContaining([expect.objectContaining({ id: older.id }), expect.objectContaining({ id: recent.id })])));
+    expect(queryClient.getQueryData<IssueRecentComments>([...queryKeys.issues.comments("PAP-1"), "recent"])?.latestCommentId).toBe(recent.id);
+    expect(mockIssuesApi.listComments).not.toHaveBeenCalled();
+    expect(mockActivityApi.forIssue).not.toHaveBeenCalled();
+  });
+
   it.each([false, true])("loads older history after sending from a cold view (reassign=%s)", async (reassign) => {
     queryClient.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 } });
     queryClient.setQueryData(["issues", "history-expanded", "PAP-1"], false);

@@ -23,9 +23,8 @@ visible cards after reveal, and thread height grew from 690 to 1,432 pixels.
 The first candidate keeps all 7 saved cards present and height constant. A
 second regression showed delayed PR counts changing card heights from 62 to
 82 pixels; reserving that statistics line makes both states 82 pixels.
-Focused UI tests: 507 pass. Focused server tests: 16 pass. Token and map checks pass.
-Final browser checks, full workspace typecheck/tests/build and hosted review are
-in progress. One early candidate browser run exceeded the initial 5-second dev
+Focused UI tests: 551 pass before the added retention regression. Focused server tests: 16 pass. Token and map checks pass.
+Eight initial browser checks, full workspace typecheck and build pass. Full local tests and hosted CI remain in progress. Review found that document navigation dropped a separately fetched older comment. The fix retains target comments in the observed compact window without advancing its cursor. Its added unit and browser checks pass, including row position. Hosted acceptance is recorded in PR #18092. One early candidate browser run exceeded the initial 5-second dev
 readiness deadline; later runs use 10 seconds. No reliable latency gain is claimed.
 The initial 503 linked-comment fixture exercised the app's global reconnect and
 30-second retry policy. The target-specific failure check uses a terminal 404.
@@ -33,7 +32,7 @@ The initial 503 linked-comment fixture exercised the app's global reconnect and
 Local reproduction: http://127.0.0.1:3223/TAS/issues/TAS-1#document-investigation.
 Synthetic task data only; no live provider execution. Restart with
 `PAPERCLIP_HOME=/tmp/paperclip-stable-task-loading PAPERCLIP_INSTANCE_ID=task-loading PAPERCLIP_UI_DEV_MIDDLEWARE=true node cli/node_modules/tsx/dist/cli.mjs cli/src/index.ts run`.
-Evidence is retained under `/tmp/task-loading-proof/` until final attachment.
+Evidence is retained under `/tmp/task-loading-proof/`; the generated report is also attached to the disposable local instance. The canonical PR is https://github.com/paperclipai/paperclip/pull/18092.
 
 State: branch `codex/stable-task-anchor-loading`; baseline `063cfd4381`.
 Dependencies installed locally; the existing lockfile was stale and will not be committed.

@@ -132,6 +132,21 @@ test("opening documents and older comments keeps the mounted composer and compac
   await expect(editor).toHaveAttribute("data-mount-proof", "retained");
 });
 
+test("opening a document from an older linked comment retains that row and its position", async ({ page, request }) => {
+  // Give the real saved target a document link without inventing a browser row.
+  const target = await (await request.get(`/api/issues/${fixture.id}/comments/${fixture.oldestCommentId}`)).json();
+  await page.route(`**/api/issues/${fixture.id}/comments/${fixture.oldestCommentId}`, route => route.fulfill({ json: { ...target, body: `${target.body}\n\n[Inspect saved evidence](#document-investigation)` } }));
+  await page.goto(`/${fixture.prefix}/issues/${fixture.identifier}#comment-${fixture.oldestCommentId}`);
+  await ready(page);
+  const row = page.locator(`[id="comment-${fixture.oldestCommentId}"]`);
+  const before = (await row.boundingBox())!.y;
+  await row.getByRole("link", { name: "Inspect saved evidence", exact: true }).click();
+  await expect(page.locator('[id="side-panel-content-document:investigation"]')).toBeVisible();
+  await expect(row).toBeVisible();
+  await expect.poll(async () => Math.abs((await row.boundingBox())!.y - before)).toBeLessThanOrEqual(2);
+  await expect(page.getByRole("button", { name: "More messages", exact: true })).toBeVisible();
+});
+
 test("a failed linked comment keeps recent messages readable and retries without expanding history", async ({ page }) => {
   const targetPath = `**/api/issues/${fixture.id}/comments/${fixture.oldestCommentId}`;
   await page.route(targetPath, route => route.fulfill({ status: 404, contentType: "application/json", body: '{"error":"Comment not found"}' }));
