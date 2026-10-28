@@ -158,3 +158,37 @@ original revisions. The current complete publication/startup group has 43 cases;
 none are skipped. This preparation is local and unpublished, with both preceding
 PRs still required to land before final integration and fresh exact-head checks.
 No full local repository, live-provider or physical sleep claim is made.
+
+
+### Local acceptance on the indexed terminal-confirmation parent
+
+Normal merge `71ec3c00d15cd8081514f0d2eb99d5a1728425b1` adopts published terminal
+confirmation parent `a35e78d076c1b618bc643391b7520fa6952fc996`, including its
+concurrent partial index, company/id keyset discovery and current master
+`644937c93150c423f12674992c7ea1e8b5dbc98c`. Both complete sets of added/removed
+patch edits are preserved, excluding only blob hashes and hunk line metadata.
+The two shared files (chat integration tests and confirmation actions) merge
+normally; every unrelated parent blob is retained. Proof:
+`/tmp/sleep33-indexed-parent-composition-proof.json`.
+
+**74 distinct cases pass on this combined source:** 31 selected chat cases
+(14 continuation lifecycle/stop/retry/outer-commit cases plus 17 parent
+confirmation lifecycle/query-cost cases; 1,671 skipped), and all 43 cases across
+complete interaction-publication and app/startup suites. Server typechecking,
+build and module boundaries pass. Fresh isolated PostgreSQL databases use the
+parent's complete migration history through 0398. Its five newest snapshots
+remain 0394–0398, with no schema changes from this slice.
+
+Commands, actual fixtures and tested revision:
+`/tmp/sleep33-indexed-parent-acceptance-command.json`. Logs/exit receipts:
+`/tmp/sleep33-indexed-parent-{types,build,boundaries,migrate,lifecycle,consumers}.*`.
+The previous 57-case matrix retains its original revision scope; repeated cases
+are not added to the current total. The following audit-only commit leaves all
+owned product/test sources unchanged.
+
+This is local preparation. Terminal confirmations #17651 must actually merge
+before this slice is reconciled with its landed squash parent and published.
+The existing remote head's review is not a review of this integration. Fresh
+exact-head CI and Greptile 5/5 without actionable findings remain required.
+No full local repository suite, live provider or physical suspension result is
+inferred from this acceptance.
