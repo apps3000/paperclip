@@ -8,7 +8,7 @@ import { getEmbeddedPostgresTestSupport, startEmbeddedPostgresTestDatabase } fro
 import { resolveExternalTestDatabaseUrl } from "./helpers/external-test-database.js";
 import { createDeliveryWorkCoordinator } from "../services/delivery-work-coordinator.js";
 import { idleWorkSnapshot } from "../services/task-admission.js";
-import { voiceInboundCleanup } from "../services/voice/voice-inbound-cleanup.js";
+import { assertVoiceInboundCleanupSettled, voiceInboundCleanup } from "../services/voice/voice-inbound-cleanup.js";
 import { notifyVoiceInbound } from "../services/voice/voice-inbound-notifications.js";
 import { notifyVoiceChange } from "../services/voice/voice-recovery-notifications.js";
 
@@ -59,7 +59,7 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
   });
   afterAll(async () => { await db?.$client.end({ timeout: 1 }); await temporary?.cleanup(); });
   async function admission(patch: Partial<typeof chatVoiceInboundCalls.$inferInsert> = {}, writer = db) {
-    const id = randomUUID();
+    const id = patch.id ?? randomUUID();
     return writer.transaction(async tx => {
       await notifyVoiceInbound(tx, { kind: "admission", id });
       return (await tx.insert(chatVoiceInboundCalls).values({ id, companyId, endpointId, providerSessionId: randomUUID(), state: "awaiting_approval", approvalCode: "123456", generation: 1, credentialFingerprint: "test", toolTokenHash: "a".repeat(64), requestFingerprint: id, expiresAt: new Date(Date.now() - 1), ...patch }).returning())[0];
@@ -134,7 +134,7 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
   it("backfills only provable legacy termination and preserves rejected cleanup debt", async () => {
     const confirmed = await admission({ state: "ended" });
     const uncertain = await admission({ state: "ended", approvedByUserId: randomUUID(), callerAuthority: "member" });
-    const migration = await readFile(new URL("../../../packages/db/src/migrations/0395_married_the_hand.sql", import.meta.url), "utf8");
+    const migration = await readFile(new URL("../../../packages/db/src/migrations/0396_tan_paladin.sql", import.meta.url), "utf8");
     const backfill = migration.split("--> statement-breakpoint").at(-1)!;
     await db.$client.unsafe(backfill); await db.$client.unsafe(backfill);
     expect((await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, confirmed.id)))[0].cleanupConfirmedAt).not.toBeNull();
@@ -209,25 +209,84 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
     expect((await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, call.id)))[0].cleanupConfirmedAt).not.toBeNull();
     await quiet(); expect(terminate).not.toHaveBeenCalled();
   });
+  it.each(["ended", "expired"] as const)("settles terminal legacy %s admissions without a session binding", async state => {
+    const call = await admission({ state, approvedByUserId: randomUUID(), callerAuthority: "member", requestedIssueId: issueId });
+    const endedAt = new Date(Date.now() - 20_000);
+    await owner(call, { state: "ended", endedAt });
+    const service = voiceInboundCleanup(db, terminate);
+    await expect(assertVoiceInboundCleanupSettled(db, companyId)).rejects.toMatchObject({ status: 409 });
+    expect(await service.check(call.id)).toBeNull();
+    expect((await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, call.id)))[0])
+      .toMatchObject({ state, cleanupConfirmedAt: endedAt, cleanupNextAttemptAt: null });
+    await start(service); await settled(); await quiet();
+    expect(terminate).not.toHaveBeenCalled();
+    await assertVoiceInboundCleanupSettled(db, companyId);
+  });
+  it.each(["denied", "expired", "ended"] as const)("hands rejected legacy %s admissions without a binding to live recovery", async state => {
+    const call = await admission({ state, approvedByUserId: randomUUID(), callerAuthority: "member", requestedIssueId: issueId });
+    const session = await owner(call);
+    const service = voiceInboundCleanup(db, terminate);
+    expect(await service.check(call.id)).toBeNull();
+    expect((await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, call.id)))[0])
+      .toMatchObject({ state, sessionId: session.id, cleanupConfirmedAt: null });
+    expect((await db.select().from(chatVoiceSessions).where(eq(chatVoiceSessions.id, session.id)))[0].state).toBe("ending");
+    await start(service); await settled(); await quiet();
+    await db.transaction(async tx => {
+      await notifyVoiceChange(tx, { kind: "session", id: session.id });
+      await tx.update(chatVoiceSessions).set({ state: "ended", endedAt: new Date() }).where(eq(chatVoiceSessions.id, session.id));
+    });
+    await settled();
+    expect((await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, call.id)))[0].cleanupConfirmedAt).not.toBeNull();
+    await quiet(); expect(terminate).not.toHaveBeenCalled();
+  });
+  it.each([
+    { mode: "outbound_phone" as const },
+    { idempotencyKey: "another-admission" },
+    { generation: 2 },
+    { credentialFingerprint: "another-credential" },
+    { toolTokenHash: "b".repeat(64) },
+  ])("retains rejected legacy cleanup debt when session evidence conflicts: %j", async patch => {
+    const call = await admission({ state: "expired" });
+    const session = await owner(call, patch);
+    await expect(voiceInboundCleanup(db, terminate).check(call.id)).rejects.toMatchObject({ status: 409 });
+    expect((await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, call.id)))[0])
+      .toMatchObject({ state: "expired", sessionId: null, cleanupConfirmedAt: null });
+    expect((await db.select().from(chatVoiceSessions).where(eq(chatVoiceSessions.id, session.id)))[0].state).toBe("active");
+    expect(terminate).not.toHaveBeenCalled();
+  });
   it("retains first work committed during drain without passive SQL", async () => {
     await start(); await settled(); enabled = false;
     await admission(); await quiet(60_000); expect(terminate).not.toHaveBeenCalled();
     enabled = true; await settled(); expect(terminate).toHaveBeenCalledOnce(); await quiet();
   });
   it("pages backlog fairly while a failed provider retains its own retry", async () => {
-    const broken = await admission();
+    vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"], shouldAdvanceTime: false });
+    const broken = await admission({ id: "00000000-0000-4000-8000-000000000001" });
     for (let i = 0; i < 104; i++) await admission();
-    const other = await fixture(), last = await admission({ companyId: other.companyId, endpointId: other.endpointId });
+    const other = await fixture(), last = await admission({ id: "ffffffff-ffff-4fff-bfff-ffffffffffff", companyId: other.companyId, endpointId: other.endpointId });
     let failed = true;
     terminate.mockImplementation(async call => { if (call.id === broken.id && failed) throw new Error("provider unavailable"); return true; });
     await start();
-    expect(terminate.mock.calls.slice(0, 25).some(([call]) => call.id === last.id)).toBe(true);
-    // waitFor already advances fake time. Extra one-second jumps can reach
-    // the failed provider's retry while ordinary database writes are pending.
-    await vi.waitFor(() => {
-      expect(terminate.mock.calls.filter(([call]) => call.id !== broken.id)).toHaveLength(105);
-    }, { timeout: 5000 });
+    expect(terminate.mock.calls).toHaveLength(25);
+    expect(terminate.mock.calls.some(([call]) => call.id === last.id)).toBe(false);
+    const [pending] = await db.select().from(chatVoiceInboundCalls).where(eq(chatVoiceInboundCalls.id, broken.id));
+    const retryAt = pending.cleanupNextAttemptAt!.getTime();
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.waitFor(() => expect(terminate).toHaveBeenCalledTimes(50), { interval: 0 });
+    const otherPosition = terminate.mock.calls.findIndex(([call]) => call.id === last.id);
+    expect(otherPosition).toBeGreaterThanOrEqual(25);
+    expect(otherPosition).toBeLessThan(50);
+    for (let pass = 0; pass < 20; pass++) {
+      await vi.advanceTimersByTimeAsync(1000);
+      await vi.waitFor(() => expect(coordinator!.nextWakeAt() !== null || idleWorkSnapshot().active === 0).toBe(true), { interval: 0 });
+    }
+    await vi.waitFor(() => expect(idleWorkSnapshot().active).toBe(0), { interval: 0 });
+    expect(terminate.mock.calls.filter(([call]) => call.id !== broken.id)).toHaveLength(105);
+    expect(terminate.mock.calls.filter(([call]) => call.id === broken.id)).toHaveLength(1);
+    expect(Date.now()).toBeLessThan(retryAt);
     expect(errors).toHaveLength(1); failed = false;
-    await settled(); errors.length = 0; await quiet();
+    await vi.advanceTimersByTimeAsync(retryAt - Date.now()); await settled();
+    expect(terminate.mock.calls.filter(([call]) => call.id === broken.id)).toHaveLength(2);
+    errors.length = 0; await quiet();
   });
 });

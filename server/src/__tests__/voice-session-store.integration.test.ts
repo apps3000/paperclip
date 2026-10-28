@@ -1885,12 +1885,19 @@ const support = external ? { supported: true } : await getEmbeddedPostgresTestSu
     await db.update(chatVoiceReports).set({transcript: [...detail.report.transcript, {...detail.report.transcript[0]!, id: "legacy-control", index: 1, text: VOICE_RESULT_NOTIFICATION}]}).where(eq(chatVoiceReports.sessionId, first.session.id));
     expect((await f.service.callDetail(f.companyId, first.session.id, f.input.caller)).report.transcript).toEqual(detail.report.transcript);
 
+    const other = await f.service.start({ ...f.input, idempotencyKey: randomUUID() });
+    await f.service.end(f.companyId, other.session.id, f.input.caller);
+    await db.update(chatVoiceSessions).set({ endedAt: new Date(Date.now() - 60_000) }).where(eq(chatVoiceSessions.id, other.session.id));
     await db.update(chatVoiceReports).set({ nextCheckAt: new Date(0) }).where(eq(chatVoiceReports.sessionId, first.session.id));
-    const latest = new Date(Date.now() + 10000);
-    f.transport.callReport.mockResolvedValueOnce({ ...await f.transport.callReport(), costMicroUsd: "240000", providerUpdatedAt: latest });
+    const [stored] = await db.select().from(chatVoiceSessions).where(eq(chatVoiceSessions.id, first.session.id));
+    const baseline = await f.transport.callReport(), latest = new Date(Date.now() + 10000);
+    let response = { ...baseline, costMicroUsd: "240000", providerUpdatedAt: latest };
+    f.transport.callReport.mockImplementation(async (providerSessionId?: string) => providerSessionId === stored.providerSessionId ? response : baseline);
     await f.service.reconcile(1000);
+    expect((await f.service.callDetail(f.companyId, first.session.id, f.input.caller)).report.costMicroUsd).toBe("240000");
+    expect((await f.service.callDetail(f.companyId, other.session.id, f.input.caller)).report.costMicroUsd).toBe("120000");
     await db.update(chatVoiceReports).set({ nextCheckAt: new Date(0) }).where(eq(chatVoiceReports.sessionId, first.session.id));
-    f.transport.callReport.mockResolvedValueOnce({ ...await f.transport.callReport(), costMicroUsd: "1", providerUpdatedAt: new Date(0) });
+    response = { ...baseline, costMicroUsd: "1", providerUpdatedAt: new Date(0) };
     await f.service.reconcile(1000);
     expect((await f.service.callDetail(f.companyId, first.session.id, f.input.caller)).report.costMicroUsd).toBe("240000");
     expect(await db.select().from(chatVoiceReports).where(eq(chatVoiceReports.sessionId, first.session.id))).toHaveLength(1);

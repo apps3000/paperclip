@@ -348,3 +348,69 @@ Logs: `/tmp/sleep25-config-amplification-red.log`,
 `/tmp/sleep25-scope-final-module-boundaries.log`. No full local repository suite,
 live provider, Cloud wake or physical suspension claim is added. The original
 20-path report scope and the existing finite 24-hour obligation remain intact.
+
+## Landed-master migration and acceptance — October 28
+
+The normal merge uses actual master `980775e0e956eecdc28c73c9b4aca0407ad45e1a`
+after cleanup and retention landed. The reviewed report head was
+`9bf20467dfd50b81848e1c8dd7ddc905d206418f`, based on retention `68b62b6d13`.
+An explicit-base composition preserved the complete non-database report patch
+before the acceptance-test repair below. Only the shared client, journal, and
+396 snapshot conflicted. Those metadata files were restored from actual master
+before invoking the official `pnpm db:generate` workflow.
+
+The generated report migration is now `0397_known_madrox.sql`. It retains the
+reviewed partial `(ended_at, id)` concurrent, idempotent index SQL byte-for-byte.
+The existing top-level migration registry adds only the new filename and keeps
+landed cleanup migration 396 registered. All 395 existing SQL files and the
+complete journal prefix match actual master byte-for-byte. Snapshots 393 through
+397 remain, with the generated 397 snapshot pointing to actual parent 396.
+No landed migration, snapshot contents, or journal entry was renumbered.
+
+A new empty PostgreSQL database boots through the application migrator with a
+valid report index. A deliberately failed unique concurrent index build under
+the report index name leaves an invalid index; two concurrent invocations of
+the application migrator repair it, restore the intended report index, and
+record one migration history row. Another replay succeeds. This exercises the
+new 397 registration and invalid-index recovery rather than assuming that a
+successful Drizzle generation proves executable migration acceptance.
+
+The first complete four-suite run failed: 183 passed and one report integration
+case failed, 184 total. `retains one safe report per call and rejects history
+after access revocation` expected cost 240000 but retained 120000. The test used
+a global one-shot transport response while reconciliation correctly visits
+other due calls. An unrelated call could consume the target's newer response.
+Adding an explicit earlier-ended competing call reproduced the same assertion
+in isolation on unchanged production. The test now selects responses by the
+target provider session ID, asserts the target accepts 240000, asserts the
+other call independently keeps 120000, and then proves stale cost 1 cannot
+overwrite the target. Existing access-revocation and one-report-per-call
+assertions remain. No production report or provider behavior changed.
+
+The isolated repaired case passes, followed by the complete 132-case voice
+integration suite on a new empty database. The unchanged complete report (15),
+cleanup (24), and retention (13) suites passed in the first combined run, each
+on its separate empty database. These 184 distinct consumer cases plus one
+complete schema/snapshot drift case yield 185 distinct passing cases for this
+integration. The isolated case is not added again. Database build, server
+build, final server typecheck, migration safety/numbering and module-boundary
+checks pass. The earlier 303-case evidence belongs to the stated previous head;
+it is not added to this acceptance count or claimed rerun here.
+
+Logs: `/tmp/sleep25-landed-parent-db-generate.log`,
+`/tmp/sleep25-landed-parent-db-build.log`,
+`/tmp/sleep25-landed-parent-real-migration.log`,
+`/tmp/sleep25-landed-parent-real-consumers.log` (the retained 183-pass/one-fail run),
+`/tmp/sleep25-report-mock-isolation-red.log`,
+`/tmp/sleep25-report-mock-isolation-green.log`,
+`/tmp/sleep25-landed-parent-final-voice.log`,
+`/tmp/sleep25-landed-parent-snapshot.log`,
+`/tmp/sleep25-landed-parent-final-types.log`,
+`/tmp/sleep25-landed-parent-server-build.log`, and
+`/tmp/sleep25-landed-parent-module-boundaries.log`.
+
+Fresh current-head CI and Greptile 5/5 remain required. Prior-head review scores
+are stale after this normal merge. A stopped or paused Ponytail turn without a
+verdict does not block under the user's authorization; an actual failing
+verdict must be fixed. No new full local repository suite, live-provider test,
+Cloud wake, host/database suspension, or cost-saving result is claimed.
