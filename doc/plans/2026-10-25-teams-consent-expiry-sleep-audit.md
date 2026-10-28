@@ -181,3 +181,39 @@ and the explicitly accepted company-deletion ownership policy. The report parent
 has a documentation-only follow-up after `c28de398` and still needs its own latest
 CI/reviews. This local Teams preparation must preserve that actual landed parent
 before publication; it is not authority to merge into an unmerged feature branch.
+
+
+## Inherited retention CI fairness repair — October 28
+
+Current Teams head `36f43922` received exact-head Greptile 5/5 and Ponytail 5/5,
+but CI run `40708566195`, server shard 6/12 job `122887395220`, failed the existing
+voice-retention case `pages through more than one batch of history across
+companies`. The shard had 2,291 passed tests, one failed and one skipped. Its
+initial assertion expected the other company's row already deleted after one
+startup batch, even when its random ID put it beyond the first 100-row inventory
+page. This CI failure is not accepted as green evidence.
+
+Placing the other company at a fixed final UUID reproduces the exact assertion.
+The fixture now uses a supplied ID for both insertion and its transaction hint.
+The test controls scheduler time, requires that row to remain before discovery,
+then requires its deletion in the next fair batch after page-two discovery. It
+also checks the first 25 deletions leave exactly 80 eligible rows, drains all
+remaining history, and verifies SQL quiet. The existing five-second assertion
+wait budget and global test timeout are unchanged. This corrects the acceptance
+expectation without changing retention, Teams, or shared scheduler behavior.
+
+The complete 13-case retention suite passes. Its run spent 96.66 seconds in
+module transforms but all actual cases completed successfully; no timeout was
+increased and this was not counted as a failed test or silently retried. A
+guarded mutation bypassing company rotation fails the new post-discovery fair
+batch assertion. The original shared helper was restored byte-for-byte. The
+previous 223-case Teams acceptance remains evidence for unchanged Teams source;
+these 13 retention cases are a separate CI-repair acceptance group. Earlier
+current-head Greptile/Ponytail scores become stale after publishing this test-only
+follow-up, and fresh CI must pass independently. No old-job retry or waiver is
+claimed.
+
+Logs: `/tmp/sleep26-36f-server6-job.log`,
+`/tmp/sleep26-retention-fairness-red.log`,
+`/tmp/sleep26-retention-fairness-green.log`, and
+`/tmp/sleep26-retention-fairness-mutant-red.log`.
