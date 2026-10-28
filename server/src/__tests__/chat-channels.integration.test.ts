@@ -73840,6 +73840,47 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     }
   });
 
+  it.each(["task", "company", "startup"] as const)("bounds inbound notice scope discovery with denied history (%s)", async mode => {
+    const context = await deferredChatQueueFixture();
+    const other = await deferredChatQueueFixture();
+    const rejectedIds = Array.from({ length: 250 }, () => randomUUID());
+    try {
+      const [receipt] = await readAgentWakeupRequestsById(context.action.id);
+      await db.insert(chatActions).values(rejectedIds.map(id => ({
+        ...context.action, id, providerActionId: `inbound_wakeup:${id}`,
+        payload: { ...context.action.payload, commentId: randomUUID() },
+      })));
+      await db.insert(agentWakeupRequests).values(rejectedIds.map(id => ({
+        ...receipt, id, idempotencyKey: `chat-discovery-budget:${id}`,
+      })));
+      const scope = { companyId: context.fixture.companyId, issueId: context.conversation.issueId };
+      const events: Array<Record<string, unknown>> = [], now = Date.now();
+      const capture = createDatabaseResponseCapture({ start: now - 1, end: now + 59_000 }, event => events.push(event));
+      installDatabaseResponseCapture(db, { chatActions, agentWakeupRequests }, capture);
+      let scopes: Array<{ companyId: string; issueId: string }>;
+      try {
+        scopes = await context.service.loadInboundWakeNoticeScopes(
+          mode === "task" ? scope : mode === "company" ? { companyId: scope.companyId } : undefined,
+        );
+      } finally { capture.flush(); }
+      if (mode === "startup") {
+        expect(scopes).toEqual(expect.arrayContaining([scope, {
+          companyId: other.fixture.companyId, issueId: other.conversation.issueId,
+        }]));
+      } else {
+        expect(scopes).toEqual([scope]);
+      }
+      expect(events.at(-1)).toMatchObject({ startedQueries: mode === "task" ? 0 : 1,
+        completedQueries: mode === "task" ? 0 : 1, inFlightAtEnd: 0 });
+      expect(events.filter(event => event.event === "paperclip.db_response_capture.entry.v1")
+        .reduce((count, event) => count + Number(event.rows), 0)).toBe(mode === "task" ? 0 : scopes.length);
+    } finally {
+      await context.service.shutdown(); await other.service.shutdown();
+      await db.delete(chatActions).where(inArray(chatActions.id, [...rejectedIds, context.action.id]));
+      await db.delete(agentWakeupRequests).where(inArray(agentWakeupRequests.id, [...rejectedIds, context.action.id]));
+    }
+  });
+
   it("isolates pre-run FIFO reconciliation scopes and exhausts published history", async () => {
     const first = await deferredChatQueueFixture();
     const second = await deferredChatQueueFixture();
@@ -73848,7 +73889,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(await first.service.loadInboundWakeNoticeScopes({ companyId: scope.companyId })).toEqual([scope]);
       expect(await first.service.reconcileInboundWakeNotices({ scope })).toEqual({ inserted: 1, contended: false, nextCursor: null });
       expect(await readChatPublicationsByEndpointId(second.endpoint.id)).toEqual([]);
-      expect(await first.service.loadInboundWakeNoticeScopes(scope)).toEqual([]);
+      expect(await first.service.loadInboundWakeNoticeScopes({ companyId: scope.companyId })).toEqual([]);
       expect(await first.service.reconcileInboundWakeNotices({ scope })).toEqual({ inserted: 0, contended: false, nextCursor: null });
       expect(await second.service.reconcileInboundWakeNotices({
         scope: { companyId: second.fixture.companyId, issueId: second.conversation.issueId },
@@ -73876,7 +73917,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([]);
       release(); await holder;
       expect(await context.service.reconcileInboundWakeNotices({ scope })).toEqual({ inserted: 0, contended: false, nextCursor: null });
-      expect(await context.service.loadInboundWakeNoticeScopes(scope)).toEqual([]);
+      expect(await context.service.loadInboundWakeNoticeScopes({ companyId: scope.companyId })).toEqual([]);
     } finally {
       release(); await holder; await context.service.shutdown();
     }

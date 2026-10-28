@@ -480,3 +480,38 @@ Exact commands, revision, and actual fixtures are in
 All 20 owned source/test hashes remain unchanged from the recorded acceptance
 manifest. The only subsequent publication edit adds this documentation. Fresh
 remote current-head CI and review remain required before protected merge.
+
+
+### Review repair: discover scopes without rereading action pages
+
+Greptile's current-head 5/5 summary also contained a valid P2:
+[discovery rereads denied history](https://github.com/paperclipai/paperclip/pull/17647#discussion_r4386889825).
+A task notification already contains its scope, but discovery reread every page
+of denied actions before bounded authorization could begin. Company/startup
+selection likewise transferred all candidate actions merely to deduplicate tasks.
+
+Task notifications now return their supplied scope without SQL. The subsequent
+bounded reconciliation remains responsible for checking current candidates and
+authority, including an already exhausted scope. Company and startup discovery
+use one SQL DISTINCT projection of company/task identifiers. The same candidate
+query supplies both discovery and bounded selection, preserving its owner,
+company, UUID, source-removal, and publication predicates. Broad discovery may
+still inspect candidate history within PostgreSQL; this is not a constant-cost
+query or a new recurring scan.
+
+Three real PostgreSQL regressions seed 250 denied candidates and a second company.
+They fail before the fix (two discovery queries instead of zero/one), then pass:
+zero discovery queries/rows for task hints, one query with only distinct scope
+rows for company/startup. The existing exhausted-history assertions now exercise
+company discovery; task hints deliberately need no database existence check.
+Cancellation, projection budgets and precise cursor behavior remain unchanged.
+
+The revised matrix passes **267 distinct cases**: 142 complete consumer cases,
+53 selected ordinary-notice cases (1,598 skipped), and 72 separate retry cases
+(1,579 skipped). Fresh isolated databases keep retained obligations independent.
+Server typechecking, build, and module boundaries pass. Exact commands/fixtures
+are in `/tmp/sleep30-discovery-final-acceptance-command.json`; before/after evidence
+is `/tmp/sleep30-discovery-{red,green}.log`, and acceptance logs/status receipts
+are `/tmp/sleep30-discovery-final-{consumers,notices,retries}.*`.
+The earlier 264-case acceptance retains its original revision scope. None of
+these runs establishes full local repository acceptance or deployed sleep.
