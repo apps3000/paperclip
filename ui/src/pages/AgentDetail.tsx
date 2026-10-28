@@ -1882,21 +1882,6 @@ export function AgentOverview({
           </div>
         )}
       </section>
-
-      <section className="space-y-3" aria-labelledby="agent-audit-links-heading">
-        <h3 id="agent-audit-links-heading" className="text-sm font-medium">Audit</h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {(["activity", "runs", "costs", "budgets"] as const).map((section) => (
-            <Link
-              key={section}
-              to={agentScopedAuditHref(agent.id, section)}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-medium capitalize hover:bg-accent"
-            >
-              {section}
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
