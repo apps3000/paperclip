@@ -318,3 +318,27 @@ The earlier 80-case matrix retains its original revision scope. This slice is
 still local and unpublished: its failed-retry parent must merge before final
 landed-parent integration and fresh remote checks/review. The following
 acceptance-only edit leaves all owned server sources/tests unchanged.
+
+
+### Acceptance on the actual landed retry parent
+
+Failed-retry notices #17649 have merged at
+`f4f02880cae4f5fa54d47d39565ca99b6b72446d`. The final normal two-parent integration
+is `32e64a7e9ea5b457e54ca7b268be90e1e155b451`. Its semantic merge base is verified
+parent `fa95a1f2fb9d546aa62dbd3b43aa714f5c88bd35`, resolving historical conflicts
+caused by squash ancestry. The complete 14-path owned binary patch is identical
+and all five unrelated current-master paths are preserved. No rebase/force push
+is used; the normal merge parents and exact tree are verified.
+
+The same **29 distinct confirmation/startup cases pass again on actual master**:
+16 selected confirmation cases (1,671 skipped) and all 13 startup cases. These
+are repeated cases, not 58 different tests. Server typechecking/build and module
+boundaries pass before testing. Commands, fixtures and revision are in
+`/tmp/sleep32-landed-acceptance-command.json`; receipts/logs are
+`/tmp/sleep32-landed-{types,build,boundaries,confirmations,startup}.*`.
+The earlier 80-case matrix retains its original revision scope. All 12 owned
+server source/test hashes remain unchanged after the acceptance-only follow-up,
+recorded in `/tmp/sleep32-landed-tested-source-sha256.json`; the integration proof
+is `/tmp/sleep32-landed-parent-publication-proof.json`. Publication requires fresh
+exact-head remote CI and Greptile 5/5. No physical sleep or full local repository
+result is inferred from these checks.
