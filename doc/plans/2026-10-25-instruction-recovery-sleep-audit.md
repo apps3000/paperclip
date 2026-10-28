@@ -162,7 +162,7 @@ No provider is launched to recover a captured legacy instruction candidate.
 Current PR CI and fresh review are still required. Host suspension, database
 suspension, external wake delivery, the two remaining instruction duties, the
 other run-reaper duties, and the complete original stack inventory remain open.
-This stack has no merge authorization.
+The later stack campaign authorizes an ordinary protected merge only after exact-current-head Greptile 5/5, clean CI, and required review findings are resolved.
 
 ## Foreground ownership correction (2026-10-27)
 
@@ -215,3 +215,44 @@ failed test cannot leave retry debt in the next test's global reconstruction.
 All 38 instruction-copy cases pass on a fresh PostgreSQL 17 database with the
 owner branch's 396 migrations. The controlled reproduction fails without the
 fixture correction. No production retry code, timeout, or assertion is weakened.
+
+
+## Current parent composition and acceptance (2026-10-28)
+
+The existing slice was integrated with the updated cancellation parent
+`d9da519b32bd7e5ecaf2156c3de217fc47187f50` by a normal merge, yielding
+`77cd93fa08310ecdc834964e9a4326f794c2be87`. All substantive owned edits remain
+identical after excluding unchanged context and hunk coordinates. The literal
+patch comparison initially rejected the updated context; zero-context comparison
+and inspection establish that the edits themselves are unchanged. Every unrelated
+upstream blob is preserved. The entire database source tree is identical to the
+parent: this slice has no migration or table.
+
+All six complete files passed, **268 cases with no skips**, in 46.26 seconds:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| Instruction working copies and captured commits | 38 |
+| Persistent agent directory working copies | 87 |
+| Server startup and feedback export | 53 |
+| Heartbeat instruction-copy boundary | 14 |
+| Heartbeat recovery | 45 |
+| Heartbeat run lifecycle | 31 |
+
+Instruction copies, directory copies, and recovery each used a separate newly
+created PostgreSQL database migrated through the current 0404 parent history
+before fixture setup. The lifecycle suite retained its real embedded database.
+No reused filesystem database, skipped suite, increased timeout, or narrowed
+case-name selection is counted as acceptance. The earlier failures above remain
+part of the record.
+
+Database build, production server typecheck and build, module boundaries, target
+migration-order validation, and all three fresh migrations passed. File collection
+and replacement stay outside the short pending-state transaction. Foreground
+ownership, the persisted next deadline, attempt cap, authorization, exact-byte
+receipt and drain/shutdown contracts retain their owners. No provider turn is
+started to replay captured bytes.
+
+This is local worker and integration evidence. Final publication must carry the
+actual landed parent ancestry, followed by fresh current-head CI and review.
+It does not establish host or database suspension or a durable Cloud alarm.
