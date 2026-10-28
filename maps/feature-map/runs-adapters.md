@@ -74,6 +74,15 @@ mutations. Qualify a useful model task separately from saving the account.
 
 ### `session`
 
+For a plugin computer, complete a task, let its warm session suspend, then send
+two follow-ups within the next warm window. Verify the first resumes the saved
+session and the second keeps the same provider history without an identity
+mismatch. After a fresh recovery into a repository-free directory, send another
+ordinary follow-up. Verify it retains that directory without Core Git worktree
+preparation. Explicit repository strategies and changed provider owners must
+remain denied. Executor and workspace-preparation regressions cover control
+behavior; they do not establish live provider acceptance.
+
 For a remote OpenCode agent configured with `per_turn`, complete a task, then
 send two follow-ups without resetting its session. Verify that each continuation
 restores its external controller checkpoint, retains provider context and saved

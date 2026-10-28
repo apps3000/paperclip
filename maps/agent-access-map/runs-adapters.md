@@ -271,6 +271,15 @@ session-control access. Deployed diagnostic usefulness remains unverified.
 
 ## `session`
 
+Plugin suspension receipts remain required through recovery and admission, then
+are removed when the admitted session becomes live. A later warm run therefore
+does not inherit an obsolete stopped-run identity. Repository-free fresh plugin
+directories retain their saved company, task, workspace, provider owner and
+attempt bindings on follow-up. This does not grant session-reset authority or
+discard an explicit repository strategy. See the
+[session recipe](../feature-map/runs-adapters.md#session) for the continuation
+checks; source regressions do not establish live provider acceptance.
+
 Scoped source evidence: completed warm-runner retirement can persist maintenance
 under the same process's live, task-bound preparation lease before native
 coordinator admission. Original controller generation, committed-result and
