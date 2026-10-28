@@ -1,7 +1,9 @@
 import { notifyChatInboundWakeNotices } from "./chat-inbound-wake-notice-notifications.js";
 import { notifyChatRunMilestones } from "./chat-run-milestone-notifications.js";
 import { notifyApprovalWork } from "./approval-work-notifications.js";
-import { notifyDecisionTargetWork } from "./decision-target-work.js";
+import { notifyDecisionTargetWork, notifyDecisionTargetIssueRemoval } from "./decision-targets.js";
+import { assertOnboardingFirstTaskCreationAllowed } from "./onboarding-first-task-admission.js";
+
 import { resolveConnectionIntentContinuationSource, resolveItemVerdictContinuationWake } from "./chat-interaction-continuation.js";
 import { insertIssueComment } from "./issue-comment-writes.js";
 import { measureRunTransaction } from "./execution-transaction-timing.js";
@@ -9,7 +11,7 @@ import { readNativeMonitorSource } from "./native-runtime/native-monitor-deliver
 import { readNativeContinuationSource } from "./native-runtime/native-continuation-delivery.js";
 import { assertNoCaseHandoffMutation, cancelCaseHandoffsForIssue, completeTerminalCaseHandoffsForIssue } from "./heartbeat/case-handoff-lifecycle.js";
 import { measureRunPhase } from "./execution-preparation-timing.js";
-import { automaticReadRecoveryCleanupCondition, directHumanCommentCondition, humanCreatedIssueCondition, pendingUserRequestCondition, touchedByUserCondition } from "./issue-participation.js";
+import { automaticReadRecoveryCleanupCondition, directHumanCommentCondition, humanCreatedIssueCondition, pendingUserRequestCondition, pendingUserRequestRowCondition, touchedByUserCondition, userParticipationActivityCondition } from "./issue-participation.js";
 import { resolveProjectDefaultWorkspaceId } from "./project-default-workspace.js";
 import { type AuthorizationActor, executionWorkspaceReadSqlCondition, projectReadSqlCondition } from "./authorization.js";
 import { assertExecutionWorkspaceRecordAccess, assertTaskWorkspaceSourceProjectAccess } from "./task-workspace-access.js";
@@ -57,6 +59,7 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm";
+import { unionAll } from "drizzle-orm/pg-core";
 import type { Db } from "@paperclipai/db";
 import {
   activityLog,
@@ -1173,7 +1176,13 @@ export async function resolveChatOriginPublicationBindings(
       .select({
         agentId: heartbeatRuns.agentId,
         responsibleUserId: heartbeatRuns.responsibleUserId,
-        contextSnapshot: heartbeatRuns.contextSnapshot,
+        contextSnapshot: sql<Record<string, unknown> | null>`
+          case when jsonb_typeof(${heartbeatRuns.contextSnapshot}) = 'object' then
+            (select coalesce(jsonb_object_agg(entry.key, entry.value), '{}'::jsonb)
+             from jsonb_each(${heartbeatRuns.contextSnapshot}) as entry
+             where entry.key in ('issueId', 'taskId', 'wakeCommentIds', 'wakeCommentId',
+                                 'commentId', 'source', 'sourceRunId', 'interactionId', 'endpointId'))
+          else ${heartbeatRuns.contextSnapshot} end`,
       })
       .from(heartbeatRuns)
       .where(
@@ -6742,6 +6751,17 @@ export async function readIssueCommentRunLogText(run: {
   return content;
 }
 
+/** Share task-before-comment lock order with receipt completion and task deletion. */
+async function lockIssueForCommentMutation(tx: DbTransaction, commentId: string) {
+  const [comment] = await tx.select({ issueId: issueComments.issueId, companyId: issueComments.companyId })
+    .from(issueComments).where(eq(issueComments.id, commentId));
+  if (!comment) return false;
+  const [issue] = await tx.select({ id: issues.id }).from(issues).where(and(
+    eq(issues.id, comment.issueId), eq(issues.companyId, comment.companyId),
+  )).for("no key update");
+  return Boolean(issue);
+}
+
 export function issueService(db: Db) {
   const instanceSettings = instanceSettingsService(db);
   const treeControlSvc = issueTreeControlService(db);
@@ -8049,18 +8069,40 @@ export function issueService(db: Db) {
     unreadInboxIssueIds: async (companyId: string, userId: string, readCondition: SQL<boolean>) => {
       // Rank the visible Mine set before counting unread, just like the inbox.
       // This projection never reads descriptions, run payloads, or recovery details.
-      const rows = await db.select({
-        id: issues.id,
-      }).from(issues).where(and(
+      const directlyParticipated = or(
+        and(eq(issues.createdByUserId, userId), humanCreatedIssueCondition()),
+        eq(issues.assigneeUserId, userId),
+      );
+      const participationSources = unionAll(
+        db.select({ id: sql<string | null>`${issues.id}`.as("id") }).from(issues).where(and(
+          eq(issues.companyId, companyId),
+          directlyParticipated,
+        )),
+        db.select({ id: sql<string | null>`case when length(${activityLog.entityId}) = 36 and ${activityLog.entityId} ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then ${activityLog.entityId}::uuid end`.as("id") }).from(activityLog).where(and(
+          userParticipationActivityCondition(companyId, userId),
+          notInArray(activityLog.entityId, db.select({ id: sql<string>`${issues.id}::text` }).from(issues)
+            .where(and(eq(issues.companyId, companyId), directlyParticipated))),
+        )),
+        db.select({ id: sql<string | null>`${issueComments.issueId}`.as("id") }).from(issueComments).where(and(
+          eq(issueComments.companyId, companyId), eq(issueComments.authorUserId, userId), directHumanCommentCondition(),
+        )),
+        db.select({ id: sql<string | null>`${issues.id}`.as("id") }).from(issueThreadInteractions)
+          .innerJoin(issues, and(eq(issues.id, issueThreadInteractions.issueId), eq(issues.companyId, companyId)))
+          .where(pendingUserRequestRowCondition(companyId, userId)),
+      ).as("mine_participation_sources");
+      const participated = db.selectDistinct({ id: participationSources.id }).from(participationSources).as("mine_participants");
+      const eligible = db.select({ id: issues.id, updatedAt: issues.updatedAt })
+        .from(participated).innerJoin(issues, eq(issues.id, sql`"mine_participants"."id"`)).where(and(
         eq(issues.companyId, companyId),
         visibleIssueCondition(),
         isNull(issues.conversationAgentId),
         nonPluginOperationIssueCondition(),
         ne(issues.status, "cancelled"),
-        touchedByUserCondition(companyId, userId),
         inboxVisibleForUserCondition(companyId, userId),
         readCondition,
-      )).orderBy(desc(issueCanonicalLastActivityAtExpr(companyId)), desc(issues.updatedAt), desc(issues.id)).limit(100);
+      )).orderBy(asc(issues.id)).as("issues");
+      const rows = await db.select({ id: eligible.id }).from(eligible)
+        .orderBy(desc(issueCanonicalLastActivityAtExpr(companyId)), desc(eligible.updatedAt), desc(eligible.id)).limit(100);
       if (rows.length === 0) return [];
       // Keep correlated predicates in WHERE (as in the list's user stats).
       // A single-table Drizzle SELECT projection unqualifies nested columns.
@@ -10151,6 +10193,12 @@ export function issueService(db: Db) {
           return withRelations;
         }
 
+        await assertOnboardingFirstTaskCreationAllowed(tx as unknown as Db, {
+          companyId,
+          actorAgentId: issueData.createdByAgentId,
+          actorRunId,
+        });
+
         const defaultCompanyGoal = await getDefaultCompanyGoal(tx, companyId);
         let projectWorkspaceId = issueData.projectWorkspaceId ?? null;
         let executionWorkspaceId = issueData.executionWorkspaceId ?? null;
@@ -11800,7 +11848,7 @@ export function issueService(db: Db) {
           await requestRestorePointDeletion(tx, { sourceIssueId: id });
           const [owner] = await tx.select({ companyId: issues.companyId }).from(issues).where(eq(issues.id, id));
           if (owner) await notifyApprovalWork(tx, owner.companyId);
-          await notifyDecisionTargetWork(tx);
+          await notifyDecisionTargetIssueRemoval(tx, id);
           removedIssue = await tx
             .delete(issues)
             .where(eq(issues.id, id))
@@ -12540,6 +12588,7 @@ export function issueService(db: Db) {
       };
 
       return db.transaction(async (tx) => {
+        if (!(await lockIssueForCommentMutation(tx, commentId))) return null;
         const [comment] = await tx
           .delete(issueComments)
           .where(eq(issueComments.id, commentId))
@@ -12573,6 +12622,7 @@ export function issueService(db: Db) {
       };
 
       return db.transaction(async (tx) => {
+        if (!(await lockIssueForCommentMutation(tx, commentId))) return null;
         const [source] = await tx.select({ companyId: issueComments.companyId, issueId: issueComments.issueId })
           .from(issueComments).where(and(eq(issueComments.id, commentId), isNull(issueComments.deletedAt)))
           .for("update");

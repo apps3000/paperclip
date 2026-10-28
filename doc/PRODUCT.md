@@ -49,7 +49,13 @@ start execution. This preference does not change the org chart or permissions.
 
 ### Agent Execution
 
-Existing Claude and Codex agents can upgrade from the legacy runner on their
+Agents have an **Advanced** tab for editing their settings across all configuration tabs
+as a versioned YAML document. Instructions, skills, tools, channels, trust,
+secret operations, API keys, and revision restore use their existing domain APIs.
+It edits the same configuration as the regular settings pages, validates before saving, preserves masked secrets, and rejects
+stale edits. See [Agent configuration YAML](agent-configuration-yaml.md).
+
+Existing Claude, Codex, and Grok Build agents can upgrade from the legacy runner on their
 Harness / Runtime page when Paperclip Runner is the qualified default for their
 environment. One action saves pending edits and translates compatible settings
 while keeping the harness, selected model, account bindings, instructions, and

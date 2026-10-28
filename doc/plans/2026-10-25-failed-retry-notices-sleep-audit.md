@@ -372,3 +372,47 @@ pause, and resume through the real lifecycle. Its initial failure is retained in
 `/tmp/sleep-agent-resume-lifecycle.log`. Server typecheck passed in
 `/tmp/sleep-agent-resume-types.log`. These results establish worker and transaction
 behavior only; final-stack acceptance and latest-head CI still apply.
+
+
+## Current integration and discovery acceptance — October 28
+
+The prepared local slice follows current inbound parent
+`661f2f6da8c6c22cdcc25edccd57502ee6fa8c4b`, including actual master
+`a2fbce9305c48f5242e6bafb19d049d29edc1d72`. Normal merges preserve the
+19-path slice. Two conflicts retained current lifecycle fixture migrations/client
+cleanup and the extracted retry notice import; duplicate imports were removed.
+The identical producer helper copied forward to the parent is retained once at
+this slice's original location, with both parent producer regressions intact.
+An initial raw binary-patch comparison failed after parent test additions changed
+blob hashes and hunk offsets. A full-context comparison excluding only those
+representation fields passes; `/tmp/sleep31-discovery-parent-update-proof.json`
+records the exception rather than claiming raw binary identity.
+
+The discovery-cost finding in #17647 also existed in this owner's page loop.
+Three new real PostgreSQL regressions with 250 retained candidates and a second
+company fail before the fix. Known task hints now require zero discovery SQL;
+company/startup discovery selects DISTINCT company/task identifiers using the
+same candidate predicate as bounded projection. The first SQL version failed
+with PostgreSQL 42702 because both joined tables project company_id; an explicit
+projection alias fixes the ambiguity. The final four targeted discovery/history
+cases pass. This does not claim constant database work for broad discovery.
+
+Current focused acceptance passes **404 distinct cases** on the integrated owner:
+259 across six complete consumer/lifecycle/environment suites, 20 failed-retry
+notice and native-lease producer cases, 53 ordinary-notice compatibility cases,
+and 72 separate retry/budget compatibility cases. The three chat selections skip
+1,651, 1,618 and 1,599 cases respectively; skipped cases are not passes.
+Each group uses separate PostgreSQL fixtures; lifecycle and control apply their
+own migrations, while chat and environment fixtures are explicitly premigrated.
+Final server typechecking/build and module boundaries pass.
+
+Exact commands/fixtures are `/tmp/sleep31-final-acceptance-command.json`; logs and
+exit receipts are `/tmp/sleep31-final-{consumers,notices,ordinary,compatibility}.*`
+and `/tmp/sleep31-alias-final-{types,build}.*`. The original query-budget failures,
+first ambiguous-column failure, and final green result remain in
+`/tmp/sleep31-discovery-{red,green,alias-green}.log`. Prior historical counts and
+failures above retain their original revision scope. This local preparation has
+not been published, and the parent has a new current-head P1 about ordinary input
+restoration that must be repaired and adopted before this slice can merge.
+Fresh exact-head remote CI/review, full repository acceptance and deployed sleep
+are separate claims; no live provider or physical sleep result is asserted here.
