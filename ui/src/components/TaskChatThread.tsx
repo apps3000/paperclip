@@ -2978,10 +2978,10 @@ export function TaskChatThread(props: TaskChatThreadProps) {
       : logsAreInitiallyHydrating;
   });
   // Hydrating a run inserts activity around its saved reply and can move the
-  // latest viewport substantially in the full-history view. Cold opens reveal
-  // the brief and recent messages independently; neither plans nor transcripts
-  // may hold them behind the loading screen.
-  const historyPending = !props.compactHistory && (initialHistoryPending || planLoading || transcriptHistoryPending);
+  // latest viewport substantially. Compact opens hydrate only their bounded
+  // recent window, but its saved cards and latest turn must arrive together so
+  // the first readable frame already has its final structure.
+  const historyPending = initialHistoryPending || planLoading || transcriptHistoryPending;
   const scrollNavigation = useTaskChatScrollNavigation();
   useEffect(() => {
     recordIssueDetailReadiness({ plan: !planLoading, transcripts: !transcriptHistoryPending, history: !historyPending });

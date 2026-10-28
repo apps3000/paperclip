@@ -9,6 +9,7 @@ import { issueRoutes } from "../routes/issues.js";
 import { errorHandler } from "../middleware/index.js";
 import { createHeartbeatRunState } from "../services/heartbeat/run-state.js";
 import { activityService } from "../services/activity.js";
+import { documentService } from "../services/documents.js";
 
 const support = await getEmbeddedPostgresTestSupport();
 (support.supported ? describe : describe.skip)("task cold-open reads", () => {
@@ -37,14 +38,25 @@ const support = await getEmbeddedPostgresTestSupport();
     app.use(errorHandler);
     return app;
   }
-  it("returns the core instruction without related detail and keeps company checks", async () => {
+  it("returns the instruction and saved card projection without related detail and keeps company checks", async () => {
     const response = await request(app()).get(`/api/issues/${issueId}?view=core`);
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.body).toMatchObject({ id: issueId, description: "Read this first" });
     expect(response.body).not.toHaveProperty("ancestors");
-    expect(response.body).not.toHaveProperty("workProducts");
+    expect(response.body).toMatchObject({ documentSummaries: [], planDocument: null, workProducts: [] });
     const denied = await request(app(randomUUID())).get(`/api/issues/${issueId}?view=core`);
     expect([403, 404]).toContain(denied.status);
+  });
+  it("includes saved plan content and document metadata in the core read", async () => {
+    const documents = documentService(db);
+    await documents.upsertIssueDocument({ issueId, key: "plan", title: "Saved plan", format: "markdown", body: "# Stable plan" });
+    await documents.upsertIssueDocument({ issueId, key: "evidence", title: "Saved evidence", format: "markdown", body: "Long saved evidence".repeat(1000) });
+    const response = await request(app()).get(`/api/issues/${issueId}?view=core`);
+    expect(response.status).toBe(200);
+    expect(response.body.planDocument).toMatchObject({ key: "plan", body: "# Stable plan" });
+    expect(response.body.documentSummaries).toEqual(expect.arrayContaining([expect.objectContaining({ key: "evidence", title: "Saved evidence" })]));
+    expect(response.body.documentSummaries.every((document: Record<string, unknown>) => !("body" in document))).toBe(true);
+    expect(response.body).not.toHaveProperty("ancestors");
   });
   it("returns a bounded recent exchange plus the latest human instruction", async () => {
     const humanId = randomUUID();

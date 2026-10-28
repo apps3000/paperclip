@@ -368,14 +368,21 @@ it.each([true, false])("defers hidden content until history is ready and keeps i
   expect(container.querySelector('.task-chat-history-pending')).toBeNull();
 });
 
-it.each([true, false])("keeps cold-open messages readable while history is pending (mobile=%s)", (mobile) => {
+it.each([true, false])("coordinates compact cards before first reveal and retains content during refresh (mobile=%s)", async (mobile) => {
   sidebarState.isMobile = mobile;
-  render(<TaskChatThread issueId="cold-issue" compactHistory initialHistoryPending
-    comments={createLongThreadComments()} historyControl={<button>More messages</button>} onAdd={async () => {}} />);
+  const props = { issueId: "cold-issue", compactHistory: true, comments: createLongThreadComments(), historyControl: <button>More messages</button>, onAdd: async () => {} };
+  render(<TaskChatThread {...props} initialHistoryPending />);
+  expect(container.querySelector('[data-testid="task-chat-history-loading"]')).not.toBeNull();
+  render(<TaskChatThread {...props} initialHistoryPending={false} />);
+  await act(async () => { await new Promise(resolve => requestAnimationFrame(resolve)); });
   expect(container.querySelector('[data-testid="task-chat-history-loading"]')).toBeNull();
   expect(container.textContent).toContain("Thread message 1");
   expect(container.textContent).toContain("More messages");
-  expect(container.querySelector('[data-testid="mock-editor"]')).not.toBeNull();
+  const editor = container.querySelector('[data-testid="mock-editor"]');
+  expect(editor).not.toBeNull();
+  render(<TaskChatThread {...props} initialHistoryPending />);
+  expect(container.querySelector('[data-testid="task-chat-history-loading"]')).toBeNull();
+  expect(container.querySelector('[data-testid="mock-editor"]')).toBe(editor);
 });
 
 it.each([0, 32_000, 100_000])("offers earlier output only when a single legacy run exceeds the compact window (%s bytes)", (logBytes) => {

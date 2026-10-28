@@ -53,6 +53,7 @@ vi.mock("../api/grokBot", () => ({ grokBotApi: mockGrokBotApi }));
 const mockIssuesApi = vi.hoisted(() => ({
   get: vi.fn(),
   getCore: vi.fn(),
+  getComment: vi.fn(),
   recentComments: vi.fn(),
   list: vi.fn(),
   listAll: vi.fn(),
@@ -1830,6 +1831,32 @@ describe("IssueDetail", () => {
     expect(queryClient.getQueryData(["issues", "history-expanded", "PAP-1"])).toBe(true);
   });
 
+  it.each(["#document-qa-evidence", "#document-plan", "#document-continuation-summary", "#work-product-one", "#attachment-one", "#unknown", "#comment-old-comment"])("keeps the recent conversation for anchor %s", async (hash) => {
+    queryClient.setQueryData(["issues", "history-expanded", "PAP-1"], false);
+    mockLocation.hash = hash;
+    mockIssuesApi.get.mockResolvedValue(createIssue());
+    const recent = createIssueComment({ id: "recent-comment", body: "Latest reply" });
+    const older = createIssueComment({ id: "old-comment", body: "Linked older reply" });
+    mockIssuesApi.getComment.mockResolvedValue(older);
+    mockIssuesApi.recentComments.mockResolvedValue({ comments: [recent], latestCommentId: recent.id, hasMore: true });
+    await act(async () => renderIssueView());
+    await waitForAssertion(() => {
+      expect(mockIssueChatThreadRender.mock.calls.at(-1)?.[0]).toMatchObject({ compactHistory: true });
+      expect(mockIssuesApi.recentComments).toHaveBeenCalled();
+    });
+    expect(mockIssuesApi.listComments).not.toHaveBeenCalled();
+    expect(mockActivityApi.forIssue).not.toHaveBeenCalled();
+    expect(mockActivityApi.runsForIssue).not.toHaveBeenCalled();
+    if (hash.startsWith("#comment-")) {
+      await waitForAssertion(() => expect(mockIssueChatThreadRender.mock.calls.at(-1)?.[0].comments).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: older.id }), expect.objectContaining({ id: recent.id }),
+      ])));
+      expect(mockIssuesApi.getComment).toHaveBeenCalledWith("issue-1", older.id, expect.anything());
+    } else {
+      expect(mockIssuesApi.getComment).not.toHaveBeenCalled();
+    }
+  });
+
   it.each([false, true])("loads older history after sending from a cold view (reassign=%s)", async (reassign) => {
     queryClient.setDefaultOptions({ queries: { retry: false, staleTime: 30_000 } });
     queryClient.setQueryData(["issues", "history-expanded", "PAP-1"], false);
@@ -2377,7 +2404,7 @@ describe("IssueDetail", () => {
     });
   });
 
-  it("routes plan to the Plan pane tab and leaves continuation-summary on its existing surface", async () => {
+  it("opens plan and continuation-summary in the pane without switching to full activity", async () => {
     mockPanelState.panelVisible = false;
     mockLocation.hash = "#document-plan";
     mockIssuesApi.get.mockResolvedValue(createIssue());
@@ -2399,11 +2426,11 @@ describe("IssueDetail", () => {
     await act(async () => {
       renderIssueView();
     });
-    expect(mockSetPanelVisible).not.toHaveBeenCalled();
+    expect(mockSetPanelVisible).toHaveBeenCalledWith(true);
     await waitForAssertion(() => {
       const panel = mockOpenPanel.mock.calls.at(-1)?.[0]?.props.children as
         { props?: Record<string, unknown> } | undefined;
-      expect(panel?.props?.documentDeepLink).toBeNull();
+      expect(panel?.props?.documentDeepLink).toMatchObject({ tab: "document", documentKey: "continuation-summary" });
     });
   });
 
@@ -6519,6 +6546,7 @@ describe("IssueDetail", () => {
         comments: [earlier, comment], latestCommentId: comment.id, hasMore: true,
       });
       queryClient.setQueryData(queryKeys.issues.comments(ref), { pages: [[comment, earlier]], pageParams: [null] });
+      queryClient.setQueryData([...queryKeys.issues.comments(ref), "linked", comment.id], comment);
     }
     mockIssuesApi.get.mockResolvedValue(createIssue({ status: "in_progress", assigneeAgentId: "agent-1" }));
     mockAgentsApi.list.mockResolvedValue([createAgent({ adapterType: "paperclip_runner" })]);
@@ -6555,6 +6583,7 @@ describe("IssueDetail", () => {
     await waitForAssertion(() => {
       for (const ref of refs) {
         const recent = queryClient.getQueryData<IssueRecentComments>([...queryKeys.issues.comments(ref), "recent"]);
+        expect(queryClient.getQueryData([...queryKeys.issues.comments(ref), "linked", comment.id])).toEqual(action === "delete" ? deleted : null);
         expect(recent?.comments).toEqual(after);
         expect(recent?.latestCommentId).toBe(after.at(-1)!.id);
         expect(queryClient.getQueryData<{ pages: IssueComment[][] }>(queryKeys.issues.comments(ref))?.pages.flat()).toEqual([...after].reverse());
