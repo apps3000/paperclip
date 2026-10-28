@@ -61702,6 +61702,87 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
   });
 
+  it("registers ordinary-notice work through the retry admission transaction", async () => {
+    const context = await deferredFailedRetryNoticeFixture();
+    const events: string[] = [];
+    let eventsBeforeWrite: string[] = [];
+    const unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+      if ([...scopes ?? []].some(scope => scope !== "*" && JSON.parse(scope).companyId === context.fixture.companyId)) events.push(event);
+    });
+    context.wakeup.mockImplementationOnce(async (_agentId, options) => {
+      const request = options!.durableChatRequest!;
+      await db.transaction(async tx => {
+        events.length = 0;
+        await request.authorize(tx as unknown as Parameters<typeof request.authorize>[0]);
+        eventsBeforeWrite = [...events];
+        await tx.insert(agentWakeupRequests).values({
+          id: request.id, companyId: context.fixture.companyId, agentId: request.agentId,
+          source: options!.source, triggerDetail: options!.triggerDetail, reason: options!.reason,
+          requestedByActorType: request.requestedByActorType, requestedByActorId: request.requestedByActorId,
+          requestedAt: request.requestedAt, idempotencyKey: request.idempotencyKey,
+          status: "deferred_issue_execution", payload: { ...options!.payload,
+            taskRetryRequestId: context.retry.requestId, _paperclipWakeContext: options!.contextSnapshot },
+        });
+      });
+      return null;
+    });
+    try {
+      await expect(context.admit()).resolves.toMatchObject({ status: "deferred" });
+      expect(eventsBeforeWrite).toContain("intent");
+      expect(eventsBeforeWrite).not.toContain("settled");
+      expect(events).toContain("settled");
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+    } finally { unsubscribe(); await context.service.shutdown(); }
+  });
+
+  it("registers ordinary-notice intent before a retry-owned receipt is retired", async () => {
+    const context = await deferredFailedRetryNoticeFixture();
+    let release = () => {};
+    let holding: Promise<unknown> | undefined;
+    let retiring: ReturnType<typeof context.admit> | undefined;
+    let unsubscribe = () => {};
+    const events: string[] = [];
+    const signalledScopes: string[] = [];
+    try {
+      expect(await context.admit()).toMatchObject({ status: "deferred" });
+      await reconcileTaskChatRetryReceipts(db);
+      context.wakeup.mockClear();
+      let locked!: () => void;
+      const acquired = new Promise<void>(resolve => { locked = resolve; });
+      const held = new Promise<void>(resolve => { release = resolve; });
+      context.wakeup.mockImplementationOnce(async () => {
+        holding = db.transaction(async tx => {
+          await tx.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.id, context.retry.chatActionId!)).for("update");
+          locked();
+          await held;
+        });
+        await acquired;
+        throw Object.assign(new Error("denied at resume"), {
+          details: { code: "chat_failed_run_retry_not_authorized" },
+        });
+      });
+      unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+        if ([...scopes ?? []].some(scope => scope !== "*" && JSON.parse(scope).companyId === context.fixture.companyId)) {
+          events.push(event); signalledScopes.push(...scopes ?? []);
+        }
+      });
+      retiring = context.admit();
+      void retiring.catch(() => undefined);
+      await vi.waitFor(() => expect(context.wakeup).toHaveBeenCalledOnce());
+      await vi.waitFor(() => expect(events).toContain("intent"), { timeout: 2000 });
+      expect(signalledScopes.map(scope => JSON.parse(scope))).toContainEqual({ companyId: context.fixture.companyId, issueId: context.issue.id });
+      expect(events).not.toContain("settled");
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+      release(); await holding;
+      await expect(retiring).resolves.toMatchObject({ status: "failed" });
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "failed", runId: null });
+      expect(events).toContain("settled");
+    } finally {
+      release(); await holding; await retiring?.catch(() => undefined);
+      unsubscribe(); await context.service.shutdown();
+    }
+  });
+
   async function failedChatRetryFixture(
     provider: "slack" | "telegram" | "github",
     externalActorId?: string,
