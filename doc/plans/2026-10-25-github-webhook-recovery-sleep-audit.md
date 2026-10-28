@@ -232,3 +232,19 @@ The actual parent merge and fresh current-head CI/Greptile checks remain require
 Direct GitHub Apps retain their real one-minute external recovery obligation;
 Cloud relay and disabled endpoints remain excluded. This does not expand Cloud
 alarm coverage or prove deployed host/database suspension or fleet savings.
+
+
+## Parent startup boundary correction
+
+The parent stale-review PR received a valid required review finding: its legacy
+maintenance source slice used a removed end marker. The parent reproduced that
+with explicit bounds, then fixed the marker and passed all 13 startup tests.
+This webhook-recovery slice removes that entire coordinator and timer. During
+the normal parent merge, its obsolete boundary inspection conflicts with this
+slice's existing assertions that both symbols are absent. Keep those absence
+assertions: there is no remaining coordinator section to slice. All other parent
+changes, including its audit and unrelated onboarding smoke coverage, are carried
+unchanged. The complete server, package, and UI source trees still match the
+751-case accepted revision; the eight startup cases are also rerun after resolving
+this overlap. This is a superseded test for removed functionality, not a waiver
+of an unresolved production finding. Fresh review and CI remain required.
