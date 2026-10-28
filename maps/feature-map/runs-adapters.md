@@ -191,7 +191,12 @@ an explicit Paperclip request must give target-qualification guidance. Begin the
 ordinary task to exercise the existing lazy environment path. This live journey
 remains separate from the resolver's source controls.
 
-For sandbox defaults, follow the [environment probe](./execution-environments.md#environment-settings)
+Managed Cloud images default to Paperclip Runner without a saved platform
+qualification. A platform snapshot update must not change that default or
+require a separate qualification request before Test. Disabled or overridden
+adapters still restrict availability, and actual runtime startup can still fail.
+
+For other sandbox defaults, follow the [environment probe](./execution-environments.md#environment-settings)
 recipe first. Discovery/creation read company-bound immutable-image evidence
 without allocating a target. A mutable image or snapshot name does not establish
 native compatibility. Then test the actual selected runtime with its selected
