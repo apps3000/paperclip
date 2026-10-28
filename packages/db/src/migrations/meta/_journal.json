@@ -2759,13 +2759,6 @@
       "when": 1793060791739,
       "tag": "0395_jittery_norrin_radd",
       "breakpoints": true
-    },
-    {
-      "idx": 396,
-      "version": "7",
-      "when": 1793060791740,
-      "tag": "0396_charming_edwin_jarvis",
-      "breakpoints": true
     }
   ]
 }
