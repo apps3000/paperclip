@@ -216,3 +216,20 @@ These results establish this worker's behavior and integration, not deployed hos
 or database suspension. Final publication still needs the actual landed parent
 ancestry, then fresh current-head review and CI. Existing reviews on earlier heads
 do not count for the eventual merge.
+
+
+## Landed stale-review parent ancestry
+
+Parent #17664 landed as `8bc051245f77a47bee0f8ba45896b8bfa5922e0a`. Its entire
+tree equals the already-adopted reviewed parent `0886a0229b1c4f68d2f582da86aa1f248e9124f3`.
+A normal merge records the squash ancestry. Duplicate ancestry produced five
+conflicts in the stack inventory, migration allowlist/journal, app wiring, and
+startup inspection. The existing descendant content preserves the landed tree
+and the later #17666 coordinator removal. After resolving those overlaps, the
+**entire result tree** equals the previously validated local branch, not just
+selected source hashes. The 0403 migration is therefore now in the actual master
+ancestry before this slice publishes 0404. No production or test code changed.
+
+The required #17666 parent still must merge before this slice. Publishing the
+stacked branch allows its independent CI and review to run while that parent
+finishes; it does not authorize merging into the unmerged parent.
