@@ -61,8 +61,10 @@ Repository identity and `git -c user.name=... -c user.email=...` override it.
 The launcher leaves author/committer environment variables unset instead of
 guessing the host user's details. `git config --global` changes only this
 temporary file; use repository configuration for persistent overrides.
-If the private configuration directory cannot be prepared, local commits still
-require an explicit repository or command identity. Managed shell profiles
+If the private configuration directory or default author file cannot be prepared,
+Git ignores the incomplete file. Local commits still require an explicit
+repository or command identity when no managed identity is available. A failed
+default author write does not remove valid managed credentials. Managed shell profiles
 remove empty identity overrides after environment merging, so agents do not
 need to unset them per command. A captured managed identity still takes
 precedence over repository configuration.

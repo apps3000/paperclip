@@ -112,16 +112,23 @@ describe("managed GitHub launchers", () => {
     expect(result.stderr).toContain("More than one managed GitHub identity matches this run");
     expect(result.stderr).not.toMatch(/host-token|must-not-be-used|run-capability/);
   });
-  it("keeps managed credentials available if writing the default author fails", async () => {
+  it.each(["before-write", "partial-write"])("keeps Git and managed credentials available after a %s failure", async (failure) => {
     const root = await mkdtemp(path.join(os.tmpdir(), "paperclip-github-default-write-failure-"));
     cleanups.push(() => rm(root, { recursive: true, force: true }));
     const bin = path.join(root, "managed"), realBin = path.join(root, "real");
     await mkdir(bin); await mkdir(realBin);
-    await writeFile(path.join(bin, "gh"), githubLauncherSource(), { mode: 0o700 });
+    await exec("git", ["init", root]);
+    for (const name of ["git", "gh"]) await writeFile(path.join(bin, name), githubLauncherSource(), { mode: 0o700 });
     await writeFile(path.join(realBin, "gh"), '#!/usr/bin/env node\nprocess.stdout.write(process.env.GH_TOKEN || "anonymous");', { mode: 0o700 });
     const fault = path.join(root, "write-fault.cjs");
     await writeFile(fault, `const fs = require('node:fs'); const write = fs.writeFileSync;
-fs.writeFileSync = (file, ...args) => { if (String(file).endsWith('/gitconfig')) throw new Error('fixture disk full'); return write(file, ...args); };`);
+fs.writeFileSync = (file, ...args) => {
+  if (String(file).endsWith('/gitconfig')) {
+    if (${failure === "partial-write"}) write(file, '[user', { mode: 0o600 });
+    throw new Error('fixture disk full');
+  }
+  return write(file, ...args);
+};`);
     const server = createServer((_req, res) => {
       res.setHeader("content-type", "application/json");
       res.end(JSON.stringify({ status: "available", env: { GH_TOKEN: "managed-token" } }));
@@ -129,12 +136,19 @@ fs.writeFileSync = (file, ...args) => { if (String(file).endsWith('/gitconfig'))
     await new Promise<void>(resolve => server.listen(0, "127.0.0.1", resolve));
     cleanups.push(() => new Promise<void>(resolve => server.close(() => resolve())));
     const { port } = server.address() as { port: number };
-    const result = await exec(process.execPath, ["--require", fault, path.join(bin, "gh")], { env: {
+    const env = {
       ...process.env, ...githubBrokerEnvironment({}, { url: `http://127.0.0.1:${port}`, token: "run-capability" }),
       PATH: `${bin}:${realBin}:${process.env.PATH}`,
-    } });
+    };
+    const result = await exec(process.execPath, ["--require", fault, path.join(bin, "gh")], { cwd: root, env });
     expect(result.stdout).toBe("managed-token");
     expect(result.stderr).toContain("configuration_directory_unavailable");
+    const git = (...args: string[]) => exec(process.execPath, ["--require", fault, path.join(bin, "git"), ...args], { cwd: root, env });
+    expect((await git("status", "--porcelain", "--untracked-files=no")).stdout).toBe("");
+    await expect(git("commit", "--allow-empty", "-m", "No default")).rejects.toMatchObject({ stderr: expect.stringContaining("Author identity unknown") });
+    await git("-c", "user.name=Explicit", "-c", "user.email=explicit@example.test", "commit", "--allow-empty", "-m", "Explicit identity");
+    expect((await exec("git", ["-C", root, "log", "-1", "--format=%an <%ae>|%cn <%ce>"])).stdout.trim())
+      .toBe("Explicit <explicit@example.test>|Explicit <explicit@example.test>");
   });
   // The first broker request fails, the second succeeds: the managed token must still reach gh.
   it.each([

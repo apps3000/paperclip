@@ -39,6 +39,7 @@ async function main() {
   // fallback deliberately cannot load the host's gh authentication files.
   let configDirectory = path.join(directory, 'unavailable-gh-config');
   let configReady = false;
+  let authorReady = false;
   try {
     fs.mkdirSync(configRoot, { recursive: true, mode: 0o700 });
     configDirectory = fs.mkdtempSync(path.join(configRoot, 'paperclip-github-operation-'));
@@ -46,6 +47,7 @@ async function main() {
     configReady = true;
     process.once('exit', () => { try { fs.rmSync(configDirectory, { recursive: true, force: true }); } catch {} });
     fs.writeFileSync(path.join(configDirectory, 'gitconfig'), '[user]\n\tname = Paperclip\n\temail = noreply@paperclip.ing\n', { mode: 0o600 });
+    authorReady = true;
   } catch { diagnostic('configuration_directory_unavailable'); }
   {
     for (const key of Object.keys(env)) {
@@ -53,7 +55,7 @@ async function main() {
     }
     Object.assign(env, {
       GH_CONFIG_DIR: configDirectory, SSH_AUTH_SOCK: '',
-      GIT_CONFIG_GLOBAL: configReady ? path.join(configDirectory, 'gitconfig') : '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null',
+      GIT_CONFIG_GLOBAL: authorReady ? path.join(configDirectory, 'gitconfig') : '/dev/null', GIT_CONFIG_SYSTEM: '/dev/null',
       GIT_TERMINAL_PROMPT: '0',
       GIT_CONFIG_COUNT: '5', GIT_CONFIG_KEY_0: 'credential.helper', GIT_CONFIG_VALUE_0: '',
       GIT_CONFIG_KEY_1: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_1: 'git@github.com:',
