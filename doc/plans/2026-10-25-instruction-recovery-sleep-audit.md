@@ -256,3 +256,21 @@ started to replay captured bytes.
 This is local worker and integration evidence. Final publication must carry the
 actual landed parent ancestry, followed by fresh current-head CI and review.
 It does not establish host or database suspension or a durable Cloud alarm.
+
+
+## Review style correction and interrupted CI
+
+Greptile reviewed `cffe70b42b7b41f0b69c548dc47b8f1d5b753de5` at 5/5 but left
+an actionable P2: CONTRIBUTING.md prohibits new code comments. Seven new
+comment lines in the instruction-copy owner and tests are removed. The
+foreground ownership, attempt-cap barrier and fixture isolation explanations
+remain in this audit. TypeScript parsing verifies that both affected files have
+exactly the same non-comment token stream before and after removal. All other
+source bytes remain unchanged; this does not reinterpret the 268-case source
+acceptance as a new whole-suite run. Fresh head CI and Greptile are required.
+
+The first cffe CI server shard 9 stopped after receiving a runner shutdown
+signal at 23:50:45Z, then reported cancellation at 23:50:57Z. It has no final
+assertion verdict and is not counted as passing. The log is retained; no old-head
+retry is requested because the required style correction creates a new head.
+The full new-head CI must run independently.
