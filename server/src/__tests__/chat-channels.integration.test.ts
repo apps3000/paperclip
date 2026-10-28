@@ -45850,7 +45850,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     `);
     await db.update(chatActions).set({ status: "processing", result: null })
       .where(eq(chatActions.id, waiting.acceptAction.id));
-    await db.execute(sql`ANALYZE chat_actions`);
+    await db.execute(sql`VACUUM (ANALYZE) chat_actions`);
     const statements: { sql: string; params: unknown[] }[] = [];
     const select = db.select.bind(db);
     const reads = vi.spyOn(db, "select").mockImplementation((...args) => {

@@ -342,3 +342,66 @@ recorded in `/tmp/sleep32-landed-tested-source-sha256.json`; the integration pro
 is `/tmp/sleep32-landed-parent-publication-proof.json`. Publication requires fresh
 exact-head remote CI and Greptile 5/5. No physical sleep or full local repository
 result is inferred from these checks.
+
+
+### Bound retained-history reads — October 28 review repair
+
+Greptile found a valid P2 even while reporting 5/5: the new event-driven
+reconstruction still examined retained completed actions. A returned-row limit
+alone does not limit database work. This finding is fixed before merge.
+
+The generated `0398_yielding_random.sql` migration adds a partial index on
+`chat_actions(company_id, id)` only for processing `confirmation_response` rows.
+It uses `CREATE INDEX CONCURRENTLY IF NOT EXISTS`, registered with the existing
+top-level migration runner. Existing SQL/journal history and retained snapshot
+bytes are preserved; generation prunes snapshot 0393 and retains 0394–0398.
+This adds no table or scheduler service.
+
+The index alone was insufficient. PostgreSQL still preferred the primary key
+for global `ORDER BY id`, examining 20,206 action rows and hitting 20,276 buffers
+in the recorded plan. Reconstruction now orders and keyset-pages by
+`(company_id, id)`, matching the one sparse index for startup and scoped reads.
+The fixed kind/status predicates remain SQL literals so their partial-index
+eligibility does not depend on parameter values in a prepared plan. Selection
+continues to page 100 rows and keeps the existing company-fair dispatch owner.
+
+The regression captures actual emitted discovery SQL and executes it unchanged
+under `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`. With 20,000 completed/unrelated
+actions and one pending decision, the original query failed at 20,009 examined
+rows. Both final startup and company-scoped queries must return the correct
+pending action, examine at most two action rows, and touch fewer than 20 action
+buffers. The empty scoped query must also stay below 20 buffers. Planner
+settings are unchanged. The fixture vacuums/analyzes its owned table first to
+separate retained live history from dead index entries left by prior tests.
+The existing 101 pending/101 malformed prefix case also passes with composite
+paging and a terminal action in another company.
+
+**110 distinct cases pass:** 17 final confirmation lifecycle/query-cost cases
+(1,671 skipped), seven real Runner environment-prepared descriptor cases
+(295 skipped), and all 86 cases across app/startup, bundled plugins and plugin
+database suites. The last two groups run on the same product source tree;
+subsequent fixture hardening changes only the cost test's vacuum precondition,
+and all 17 confirmation cases and server typechecking pass again afterward.
+Server/database typechecking, server/database build, migration safety/numbering,
+module boundaries and a fresh PostgreSQL migration through 0398 pass.
+
+Normal integration `693e6b22536104fe7be5cebe959e14b295f27dc0` adopts master
+`644937c93150c423f12674992c7ea1e8b5dbc98c` (boxd provider/plugin integration).
+The complete owned binary patch and all 18 unrelated master paths are preserved;
+`/tmp/sleep32-index-master-composition-proof.json` records that comparison.
+Commands and receipts: `/tmp/sleep32-index-master-acceptance-command.json`,
+`/tmp/sleep32-index-master-{db-build,types,db-types,build,boundaries,upgrade,confirmations,runner,startup}.*`,
+and `/tmp/sleep32-index-final-{types,confirmations}.*`.
+
+Failure history remains visible. The initial generated-index attempt passed
+16 lifecycle cases but its new scoped observation used a one-second wait against
+the owner's existing one-second coalescing interval; that test wait is now five
+seconds, without changing product cadence or the 15-second case budget. The
+subsequent index-only plan still scanned completed history, motivating aligned
+keyset order. The preceding published head's Runner shard failed its
+`timeout-attachment` durable-suspension case (1 failed/1,955 passed/4 skipped).
+All seven descriptor variants pass locally unchanged on this repair, but only
+fresh exact-head remote CI can establish that shard's current pass. Old failed
+logs are retained in `/tmp/sleep32-runner-ci-failed.log`; no failed gate is waived.
+Fresh Greptile 5/5 with no unresolved actionable finding and all remote checks
+remain required. These results do not establish physical host/database sleep.
