@@ -416,3 +416,35 @@ not been published, and the parent has a new current-head P1 about ordinary inpu
 restoration that must be repaired and adopted before this slice can merge.
 Fresh exact-head remote CI/review, full repository acceptance and deployed sleep
 are separate claims; no live provider or physical sleep result is asserted here.
+
+
+## Final landed-parent acceptance — October 28
+
+The preceding inbound notice PR #17647 has now merged at
+`1aa3a21ac41f602977638cf0be875b01a243e69f`, including both discovery and restored-input
+wake repairs. The current normal two-parent integration is
+`43d0f84ea56845b8fc4946a7533ecbf7f07b679a`, with parents the prepared retry slice
+`c56cc27611c76587a278ac175470e0b4646b7b5f` and actual master. Squash ancestry makes
+the ordinary historical merge report eight conflicts. Using the verified landed
+parent `41f7e2c9e351efa6cfa5ef699c0e69df7425012b` as the semantic merge base yields
+a clean tree. The full 19-path owned binary patch is identical and all 23 unrelated
+master paths/deletions are preserved. That proved tree resolves the ancestry-only
+conflicts in an ordinary two-parent merge; no rebase or force push is used.
+
+Current combined-master acceptance passes **42 distinct cases**: 21 retry-notice,
+native-lease and restored-input producer cases (1,651 skipped), plus all 21 cases
+in app/startup and task-drain admission release suites. The newly landed sandbox
+resume/admission behavior is exercised with this slice's queue notifications.
+Checks run after server typechecking/build and module-boundary verification to
+avoid competing cold-import setup loads. All those checks pass. Commands/fixtures:
+`/tmp/sleep31-landed-acceptance-command.json`; results/receipts:
+`/tmp/sleep31-landed-{types,build,boundaries,notices,consumers}.*`.
+
+The earlier 404-case matrix and subsequent 21-case parent check retain their
+original revision scopes and are not counted as freshly rerun. All owned source
+and test files remain unchanged through the current normal integration; only
+this acceptance documentation follows the current tests. Their 17 hashes are in
+`/tmp/sleep31-landed-tested-source-sha256.json`; the complete integration proof is
+`/tmp/sleep31-landed-parent-publication-proof.json`. Fresh exact-head remote checks
+and Greptile 5/5 remain required after publishing this updated branch. There is
+no full local repository, live provider or deployed sleep claim.
