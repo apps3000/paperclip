@@ -212,7 +212,9 @@ cover ordering, failure drain and credential projection; they do not qualify a
 live response-time target.
 For native OpenCode with assigned connections, inspect the provider tool surface
 on both local and sandbox execution. It should contain bounded assigned-tool
-search/call schemas. Discover an allowed tool, call its returned alias, revoke
+search/call schemas. Confirm the search description states the 1–20 page limit
+and default of 5. Follow `nextOffset` to inspect later pages.
+Discover an allowed tool, call its returned alias, revoke
 its grant, and confirm discovery and execution enforce that revocation. Repeat
 in planning/ask mode with a write tool and confirm denial. The controller must
 retain the assigned gateway URL and token. An older direct-catalog OpenCode
