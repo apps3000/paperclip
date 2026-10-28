@@ -95,3 +95,39 @@ startup tests passed in 33.62 seconds. Workspace typecheck and build passed on
 the same source. Full chat/publication/startup acceptance is running in a fresh
 database; its result and remote PR checks remain required. Parent #17662 at
 01efd3f4f7 has all 53 checks passing, fresh Greptile 5/5, and no review threads.
+
+
+## Current-parent acceptance (October 28)
+
+The original query, authority checks, update predicate, and producer/lifecycle
+changes remain intact. The existing branch was merged normally with published
+review-check parent `2bba08403b195bf646eda48992b46d6f5cebf756`. Complete domain
+and schema edits and all unrelated parent blobs were preserved. The historical
+snapshot rename/delete conflict was resolved to the exact parent snapshot bytes.
+Only this branch's unlanded `0397_fearless_supernaut` migration artifacts were
+removed before canonical regeneration; all parent SQL and journal entries remain.
+
+Migration `0403_natural_cerise.sql` creates the same two partial indexes with
+concurrent, idempotent creation. Both definitions match the original migration.
+All retained parent snapshot bytes are unchanged. Canonical generation retains
+the five snapshots 0399 through 0403.
+
+At `dd6bca0485c3444d6e3d0ee10ec4aa651e801392`, all 274 complete GitHub workflow
+cases and all 13 startup cases passed: 287 distinct cases. The GitHub command
+filtered 1,485 unrelated cases. It used a new, pre-migrated PostgreSQL database.
+Coverage includes cancellation before/after real admission, outer commit and
+rollback, restart, drain and standby, update failure, concurrent assessment under
+an observed database row lock, shutdown during that wait, multi-page repair,
+manual-history exclusion, and settled-history quiet. Database build, server
+production typecheck/build, module boundaries, and target migration order passed.
+
+A populated parent database upgraded from 0402 to 0403 with all 401 previous
+migration receipts unchanged and exactly one new receipt. Replay added none.
+Both indexes were ready and valid on fresh and upgraded PostgreSQL databases.
+The earlier query-plan measurements above retain their historical revision scope;
+no new fleet or whole-worker performance measurement is claimed.
+
+The audit-only follow-up preserves the accepted source, tests, and migration
+hashes. Fresh remote checks and exact-current-head Greptile review remain required.
+This acceptance does not prove deployed host/database suspension or extend Cloud
+alarm coverage. The separate missed-webhook obligation remains for the next slice.
