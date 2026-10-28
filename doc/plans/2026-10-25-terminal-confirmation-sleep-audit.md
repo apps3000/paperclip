@@ -298,3 +298,23 @@ Earlier failures/counts above retain their original revision scope. No current
 remote review or CI, full local repository suite, live provider tenant or deployed
 sleep claim follows from this local acceptance. Normal landed-parent integration
 and fresh exact-head gates remain required before merge.
+
+
+### Prepared on the published failed-retry parent
+
+The local normal merge `2ffeb04db0c4ec21865fc1f6d178e70b7b894a12` adopts published
+failed-retry parent `fa95a1f2fb9d546aa62dbd3b43aa714f5c88bd35`, after the inbound
+slice merged into actual master. The complete 14-path owned binary patch remains
+identical across that integration; the parent carries current monitor/drain and
+durable comment-write changes. Proof:
+`/tmp/sleep32-published-parent-composition-proof.json`.
+
+**29 current cases pass:** all 16 selected confirmation producer/lifecycle cases
+(1,671 skipped) and all 13 app/startup cases. Types, build and module boundaries
+pass. Commands, actual fixture and revision are in
+`/tmp/sleep32-published-parent-acceptance-command.json`; logs/exit receipts are
+`/tmp/sleep32-published-parent-{types,build,boundaries,confirmations,startup}.*`.
+The earlier 80-case matrix retains its original revision scope. This slice is
+still local and unpublished: its failed-retry parent must merge before final
+landed-parent integration and fresh remote checks/review. The following
+acceptance-only edit leaves all owned server sources/tests unchanged.
