@@ -273,3 +273,28 @@ the single-connection concurrency case; no OS semaphore cleanup is required.
 
 This establishes worker quiet and supported in-process reactivation. It does not
 prove deployed host/database sleep or cross-replica notification coverage.
+
+
+## Current prepared integration — October 28
+
+The existing 14-path slice is normally merged onto the current prepared
+failed-retry parent `c56cc27611c76587a278ac175470e0b4646b7b5f` at local revision
+`c1e8542b588a4fa59b62f9829541d3daea4f1ddc`. All original patch edits and context
+are identical after excluding only blob index hashes and hunk line offsets;
+`/tmp/sleep32-current-parent-composition-proof.json` records the comparison.
+The parent includes master `d30c8f42b8` and the inbound discovery/restoration
+repairs. This preparation is local and still depends on both preceding PRs landing.
+
+**80 distinct cases pass:** all 16 selected chat confirmation lifecycle and
+board/admin producer cases, plus 64 across the complete satisfied-connection
+and app/startup suites. The chat selection skips 1,671 other cases. Fresh,
+premigrated external PostgreSQL databases keep the lifecycle and connection
+consumer fixtures separate. The original single-connection case remains intact.
+Server typechecking, build and module boundaries pass.
+
+Commands/fixtures are `/tmp/sleep32-current-acceptance-command.json`; logs and
+exit receipts are `/tmp/sleep32-current-{confirmations,consumers,types,build,boundaries}.*`.
+Earlier failures/counts above retain their original revision scope. No current
+remote review or CI, full local repository suite, live provider tenant or deployed
+sleep claim follows from this local acceptance. Normal landed-parent integration
+and fresh exact-head gates remain required before merge.
