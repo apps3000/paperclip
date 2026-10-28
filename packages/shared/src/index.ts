@@ -1270,6 +1270,8 @@ export type {
   AgentWakeupRequest,
   InstanceSchedulerHeartbeatAgent,
   LiveEvent,
+  LiveDeliveryClientMessage,
+  LiveDeliveryServerMessage,
   DashboardRunActivityDay,
   DashboardSummary,
   TimelineActorType,
@@ -2849,3 +2851,4 @@ export * from "./prompt-injection-prevention.js";
 
 export * from "./workspace-provider.js";
 export * from "./workflows.js";
+export * from "./agent-configuration.js";
