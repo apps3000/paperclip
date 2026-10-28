@@ -365,3 +365,45 @@ following acceptance-only edit leaves all owned source/test/migration hashes
 unchanged. Fresh exact-head CI and Greptile 5/5 with no actionable findings are
 still required for this slice. No full local repository suite, live GitHub tenant
 or deployed sleep result is inferred from this acceptance.
+
+
+## Acceptance on the actual landed continuation parent
+
+Continuation recovery #17653 has merged at
+`063cfd43813cabf18417605fb9eefb9aacf95c8d`. Normal two-parent integration
+`9b3607e159153e00ccdfe538d52b591bd38d6499` preserves the full 28-path owned
+binary patch and all 20 intervening master paths. Those paths include native
+retry recovery, OpenCode provider-event exit codes and evaluation report-lock
+workflow fixes. The verified published parent is the semantic base for historic
+squash conflicts. Both normal parents and the exact tree are checked; there is
+no force push or rebase. Proof:
+`/tmp/sleep34-landed-parent-publication-proof.json`.
+
+**87 distinct current cases pass on that landed-parent source:** all 18 selected
+acknowledgement lifecycle/presentation cases (1,703 other chat cases skipped),
+all 26 fast-response service cases, all 30 heartbeat completion cases and all 13
+startup cases. Database build, server typechecking/build, module boundaries,
+three fresh PostgreSQL migrations through 0400 and the current-master migration
+order gate pass. The Runner vendor bundle is rebuilt successfully because its
+upstream provider-event inputs changed. Database build runs first so the prior
+local terminal-response preparation's ignored 0401 output cannot leak into this
+0400 acceptance.
+
+This selection rechecks the supported signals, claims, rollback/commit,
+presentation parking, stop boundaries and settlement consumers after the master
+context changes. The earlier 305-case matrix remains scoped to prepared revision
+`337f272853d4f8a51b5b9300900a46eb4e13f698`; the repeated 87 cases are not added to
+305. All three index definitions and schema history are unchanged during this
+integration. The populated upgrade/replay and fresh/upgrade index-validity proof
+above therefore keeps its stated schema scope.
+
+Commands, revision and actual fixtures:
+`/tmp/sleep34-landed-acceptance-command.json`. Receipts/logs:
+`/tmp/sleep34-landed-{db-build,types,build,boundaries,github,fast,completion,startup}.*`,
+`/tmp/sleep34-landed-migrate-{github,fast,completion}.*`, and
+`/tmp/sleep34-landed-migration-order.*`.
+The following audit-only commit leaves all owned source/test/migration hashes
+unchanged, recorded in `/tmp/sleep34-landed-tested-source-sha256.json`.
+Original failures and earlier scopes above remain visible. Publication requires
+fresh exact-head CI and Greptile 5/5 with no actionable findings. No full local
+repository, live GitHub tenant or deployed sleep result is inferred.
