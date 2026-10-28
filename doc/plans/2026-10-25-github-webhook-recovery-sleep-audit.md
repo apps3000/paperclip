@@ -248,3 +248,47 @@ unchanged. The complete server, package, and UI source trees still match the
 751-case accepted revision; the eight startup cases are also rerun after resolving
 this overlap. This is a superseded test for removed functionality, not a waiver
 of an unresolved production finding. Fresh review and CI remain required.
+
+
+## Orphan-assignment review investigation (2026-10-28)
+
+Ponytail's review of `836acef0370d42323fdfdbd6d62a805b2469f1d4` required
+preventing recovery from repeatedly loading an endpoint whose assigned agent
+cannot resolve. Its reasoning correctly identifies that the loader does not
+join agents, but the proposed orphan state conflicts with existing database
+constraints. Investigation must establish that boundary before changing SQL.
+
+The first attempted reproduction set `assigned_agent_id` to NULL. It failed
+**during fixture mutation**, with PostgreSQL 23502, before the worker ran. This
+is not a failing worker regression and is not described as one. The original
+schema and a freshly migrated PostgreSQL catalog confirm:
+
+- `chat_endpoints.assigned_agent_id` is NOT NULL.
+- `chat_endpoints_assigned_agent_id_agents_id_fk` references `agents(id)` with
+  ON DELETE RESTRICT.
+- `chat_endpoints_company_agent_fk` references `(agents.company_id, agents.id)`.
+- Both foreign keys are validated and nondeferrable.
+
+Thus a supported writer cannot commit the missing, null, deleted or foreign-company
+agent relationship described in that finding. A concurrent deletion cannot open
+a committed orphan window. The application endpoint resolver joins those same
+ID/company columns. Disabling constraints or corrupting a database would be a
+different unsupported state; the tests do not weaken the schema to manufacture it.
+
+Three new real-database cases verify the boundary: NULL assignment fails 23502,
+assignment to a missing UUID fails 23503, and deletion of the assigned agent fails
+23503. Each proves the original assignment remains, then runs real webhook
+recovery, observes one redelivery and a saved future deadline, and advances
+15 seconds with no SQL reads or extra transport. All **22 recovery-scheduling
+cases** pass on a fresh database, including the previous 19 cases and these
+three additions. The 1759 unselected cases are not counted as current passes.
+
+Production source is unchanged. The earlier 751-case acceptance retains its
+stated revision and scope; these 22 overlap 19 of those cases, so there are
+754 distinct tested cases across the evidence, not 773. No deployed sleep claim
+is made. The legacy manual recovery query remains an optional review follow-up.
+The actual parent squash ancestry was merged normally with the entire result
+tree identical to the previously validated branch, so already-landed parent
+changes no longer inflate this PR's diff. Fresh current-head CI and review
+must evaluate the constraint evidence before this slice can merge; an old
+conditional verdict or neutral check is not treated as a pass.
