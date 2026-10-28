@@ -6751,6 +6751,17 @@ export async function readIssueCommentRunLogText(run: {
   return content;
 }
 
+/** Share task-before-comment lock order with receipt completion and task deletion. */
+async function lockIssueForCommentMutation(tx: DbTransaction, commentId: string) {
+  const [comment] = await tx.select({ issueId: issueComments.issueId, companyId: issueComments.companyId })
+    .from(issueComments).where(eq(issueComments.id, commentId));
+  if (!comment) return false;
+  const [issue] = await tx.select({ id: issues.id }).from(issues).where(and(
+    eq(issues.id, comment.issueId), eq(issues.companyId, comment.companyId),
+  )).for("no key update");
+  return Boolean(issue);
+}
+
 export function issueService(db: Db) {
   const instanceSettings = instanceSettingsService(db);
   const treeControlSvc = issueTreeControlService(db);
@@ -12577,6 +12588,7 @@ export function issueService(db: Db) {
       };
 
       return db.transaction(async (tx) => {
+        if (!(await lockIssueForCommentMutation(tx, commentId))) return null;
         const [comment] = await tx
           .delete(issueComments)
           .where(eq(issueComments.id, commentId))
@@ -12610,6 +12622,7 @@ export function issueService(db: Db) {
       };
 
       return db.transaction(async (tx) => {
+        if (!(await lockIssueForCommentMutation(tx, commentId))) return null;
         const [source] = await tx.select({ companyId: issueComments.companyId, issueId: issueComments.issueId })
           .from(issueComments).where(and(eq(issueComments.id, commentId), isNull(issueComments.deletedAt)))
           .for("update");
