@@ -1038,6 +1038,22 @@ snapshot lasts for one request only; the next request checks current grants,
 membership, and run restrictions again. Adapters that expose only `decide`
 retain the individual-read path with duplicate bindings shared within the request.
 
+### Managed Cloud runner images
+
+Paperclip-managed Cloud sandbox images do not require a saved platform or
+snapshot qualification. Discovery offers Paperclip Runner, and execution uses
+the current platform-selected image even when an older qualification exists.
+The real runtime startup and handshake report compatibility failures. Test goes
+directly to that runtime check when discovery already offers Paperclip Runner.
+Company access, adapter availability, credentials and runtime integrity checks
+still apply. Self-hosted sandboxes, custom environments and active captured
+custom images keep their existing qualification and snapshot binding.
+The active Cloud configuration must still provision the sandbox provider; a
+leftover managed marker alone does not enable this policy. Discovery reads
+custom-image metadata without resolving provider credentials.
+Outdated captures that no longer match the base configuration do not change
+the managed runner default, consistent with execution's template selection.
+
 ### Local Linux runner qualification
 
 Before serving requests, the server reads `getconf GNU_LIBC_VERSION` once with
