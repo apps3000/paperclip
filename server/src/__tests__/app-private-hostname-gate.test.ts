@@ -74,7 +74,11 @@ describe("createChatReconciliationCoordinator", () => {
 
   it("keeps receiver and voice inventory out of periodic chat maintenance", () => {
     const source = readFileSync(new URL("../app.ts", import.meta.url), "utf8");
-    const maintenance = source.slice(source.indexOf("const chatReconciliation ="), source.indexOf("const unsubscribeChatPublicationSignals"));
+    const maintenanceStart = source.indexOf("const chatReconciliation =");
+    const maintenanceEnd = source.indexOf("let chatPublicationTimer:", maintenanceStart);
+    expect(maintenanceStart).toBeGreaterThanOrEqual(0);
+    expect(maintenanceEnd).toBeGreaterThan(maintenanceStart);
+    const maintenance = source.slice(maintenanceStart, maintenanceEnd);
     expect(maintenance).not.toContain("chatChannels.reconcileProviderRuntimes()");
     expect(maintenance).not.toContain("chatChannels.voice.");
     expect(maintenance).not.toContain("enqueueSafeNativeChatProgress");

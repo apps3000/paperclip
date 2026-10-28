@@ -167,3 +167,25 @@ The earlier 287-case backend acceptance therefore retains the same source bytes.
 Fresh current-head CI and Greptile review are required for this repair; the old
 head's score does not satisfy that gate. Both earlier CI failures remain recorded
 in run 40777754306, including attempts 1 and 2, and its failed-job artifacts.
+
+
+## Ponytail startup boundary correction
+
+All CI and Greptile checks passed on `b3c81baebf1787ffb200bdd55533b422c2687033`,
+but Ponytail's completed 4/5 review said “Ship after fixing 1.” That conditional
+verdict blocked the merge. Its required finding was valid: one source-wiring test
+used the removed `unsubscribeChatPublicationSignals` marker, so its end index was
+-1 and its slice inspected almost the whole application file.
+
+Explicit boundary assertions reproduced that defect: the selected test failed
+because -1 was not after its start. The test now stops at the existing
+`let chatPublicationTimer:` declaration and requires a nonnegative start and an
+end after that start. All 13 startup/hostname cases pass with this correction.
+No production behavior, deadline, or browser assertion changes in this follow-up.
+The YAML helper and its six-case acceptance remain unchanged.
+
+The review's second item was optional cleanup of the no-op coordinator lane.
+Existing dependent #17666 removes the whole coordinator and the last chat interval;
+this PR keeps its narrower scope. Fresh review and CI are required for the corrected
+head. A neutral review check or a confidence score does not override a conditional
+ship verdict or an unresolved required finding.
