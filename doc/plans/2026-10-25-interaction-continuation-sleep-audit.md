@@ -131,3 +131,30 @@ All 14 new continuation cases pass after this correction
 startup guards pass separately, 27 cases total
 (`/tmp/sleep33-publication-startup.log`). Fresh broad acceptance and remote gates
 on the corrected head remain required. No failed run has been relabelled passing.
+
+
+## Current prepared integration — October 28
+
+The existing 12-path slice is normally merged onto prepared confirmation parent
+`9e9fff2be989d8447eb34a7fcba78076a26bdd27` at
+`22530681c6a4a3d11ea14356d751cecf45035ba8`. The complete original edits and context
+are identical after excluding only blob index hashes/hunk offsets. The proof is
+`/tmp/sleep33-current-parent-composition-proof.json`. No new implementation is
+added during this preparation; its predecessors carry current master and the
+notice discovery/restoration repairs.
+
+**57 distinct cases pass:** all 14 selected real continuation lifecycle,
+concurrent-response, outer-commit and stop-before-publication cases (1,687 other
+chat cases skipped), plus 43 across the complete interaction-publication and
+app/startup suites. These run after server typechecking/build and module boundary
+checks, which also pass. Two isolated PostgreSQL fixtures keep the chat lifecycle
+and publication consumers independent; the publication owner applies its own
+migrations. Commands, fixtures and tested revision are in
+`/tmp/sleep33-current-acceptance-command.json`; logs/exit receipts are
+`/tmp/sleep33-current-{types,build,boundaries,continuations,consumers}.*`.
+
+The older 14-case publication count and broad acceptance above retain their
+original revisions. The current complete publication/startup group has 43 cases;
+none are skipped. This preparation is local and unpublished, with both preceding
+PRs still required to land before final integration and fresh exact-head checks.
+No full local repository, live-provider or physical sleep claim is made.
