@@ -333,3 +333,37 @@ retry owner. `allowRunCoalescing: false` on the retry's own admission is not
 proof that a later ordinary admission cannot select it. In particular, inspect
 the retry authorization-denial write before assuming it can only affect retry
 notices. This is an open producer-audit question, not a verified exemption.
+
+
+## Current-parent baseline and producer follow-up (October 28)
+
+The existing slice is prepared with a normal merge of the verified cancellation
+parent `09c0b8dc92f589d0a3c53716581e43863a0bb819`. Its original published head is
+`ca8f2d17c64fc7cecff4526817d1ac6e1d479ff4`, with own base
+`fffc8d0c46fbbeb3da4a23a36e638fefd3b8fe3d`. All original added/removed lines and
+remaining diff context are preserved. Differences in the patch representation
+are blob IDs, line coordinates, and one inherited decision-target import that
+was renamed in the current parent. The automatic merge is clean; the renamed
+import and every unrelated parent path are retained.
+
+The existing-patch baseline passes **190 distinct selected cases**: all 142
+cancellation, app-wiring, admission-application and queued-comment application
+cases across four complete suites, plus 48 real chat cases selected for inbound
+notices/FIFO/deferred-admission behavior. The other 1,598 chat cases were skipped,
+not passed. Server typechecking, build, and module boundaries pass. Logs and
+zero-status receipts are in `/tmp/sleep30-current-parent-*`; the exact selected
+commands and isolated fixtures are in
+`/tmp/sleep30-current-parent-baseline-command.json`.
+
+This is baseline evidence, not a ready-to-merge claim. The mixed ordinary/retry
+receipt producer question above remains open in this checkpoint. Source tracing
+confirms that a later ordinary admission can select an existing retry-owned
+deferred receipt: the reader has no retry-owner exclusion, and disabling
+coalescing on the retry's own request does not exclude later ordinary requests.
+The following failed-retry slice already adds ordinary-notice notifications to
+retry authorization/admission and conditional denial retirement. Determine which
+minimal writer coverage must move into this owner before publication; verify its
+transaction behavior rather than claiming those receipts cannot be shared.
+Final producer disposition, updated acceptance, actual landed-parent integration,
+and fresh exact-head remote gates remain required. No complete local repository
+matrix, live provider, host/database suspension, or savings claim is made.
