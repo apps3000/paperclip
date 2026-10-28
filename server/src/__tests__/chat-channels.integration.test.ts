@@ -8,6 +8,7 @@ import { cloudActorHeaderSourceFromHeaders, resolveCloudTenantActor } from "../m
 import { cloudTenantPrimaryCompanyId } from "../services/cloud-instance.js";
 import { accessService } from "../services/access.js";
 import { signalDatabaseWork, subscribeDatabaseWork } from "@paperclipai/db";
+import { claimTaskRetryInput, releaseUnadmittedTaskRetryInput } from "../services/chat-channels/task-retry-input.js";
 import { restoreNativeChatReviewPresentationInTransaction } from "../services/native-runtime/native-chat-review-presentation.js";
 import { notifyChatEndpointConfiguration, notifyChatCompanyConfiguration } from "../services/chat-channels/configuration-work-notifications.js";
 import { deleteCompany } from "../services/company-deletion.js";
@@ -62248,6 +62249,87 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
   });
 
+  it("registers ordinary-notice work through the retry admission transaction", async () => {
+    const context = await deferredFailedRetryNoticeFixture();
+    const events: string[] = [];
+    let eventsBeforeWrite: string[] = [];
+    const unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+      if ([...scopes ?? []].some(scope => scope !== "*" && JSON.parse(scope).companyId === context.fixture.companyId)) events.push(event);
+    });
+    context.wakeup.mockImplementationOnce(async (_agentId, options) => {
+      const request = options!.durableChatRequest!;
+      await db.transaction(async tx => {
+        events.length = 0;
+        await request.authorize(tx as unknown as Parameters<typeof request.authorize>[0]);
+        eventsBeforeWrite = [...events];
+        await tx.insert(agentWakeupRequests).values({
+          id: request.id, companyId: context.fixture.companyId, agentId: request.agentId,
+          source: options!.source, triggerDetail: options!.triggerDetail, reason: options!.reason,
+          requestedByActorType: request.requestedByActorType, requestedByActorId: request.requestedByActorId,
+          requestedAt: request.requestedAt, idempotencyKey: request.idempotencyKey,
+          status: "deferred_issue_execution", payload: { ...options!.payload,
+            taskRetryRequestId: context.retry.requestId, _paperclipWakeContext: options!.contextSnapshot },
+        });
+      });
+      return null;
+    });
+    try {
+      await expect(context.admit()).resolves.toMatchObject({ status: "deferred" });
+      expect(eventsBeforeWrite).toContain("intent");
+      expect(eventsBeforeWrite).not.toContain("settled");
+      expect(events).toContain("settled");
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+    } finally { unsubscribe(); await context.service.shutdown(); }
+  });
+
+  it("registers ordinary-notice intent before a retry-owned receipt is retired", async () => {
+    const context = await deferredFailedRetryNoticeFixture();
+    let release = () => {};
+    let holding: Promise<unknown> | undefined;
+    let retiring: ReturnType<typeof context.admit> | undefined;
+    let unsubscribe = () => {};
+    const events: string[] = [];
+    const signalledScopes: string[] = [];
+    try {
+      expect(await context.admit()).toMatchObject({ status: "deferred" });
+      await reconcileTaskChatRetryReceipts(db);
+      context.wakeup.mockClear();
+      let locked!: () => void;
+      const acquired = new Promise<void>(resolve => { locked = resolve; });
+      const held = new Promise<void>(resolve => { release = resolve; });
+      context.wakeup.mockImplementationOnce(async () => {
+        holding = db.transaction(async tx => {
+          await tx.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.id, context.retry.chatActionId!)).for("update");
+          locked();
+          await held;
+        });
+        await acquired;
+        throw Object.assign(new Error("denied at resume"), {
+          details: { code: "chat_failed_run_retry_not_authorized" },
+        });
+      });
+      unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+        if ([...scopes ?? []].some(scope => scope !== "*" && JSON.parse(scope).companyId === context.fixture.companyId)) {
+          events.push(event); signalledScopes.push(...scopes ?? []);
+        }
+      });
+      retiring = context.admit();
+      void retiring.catch(() => undefined);
+      await vi.waitFor(() => expect(context.wakeup).toHaveBeenCalledOnce());
+      await vi.waitFor(() => expect(events).toContain("intent"), { timeout: 2000 });
+      expect(signalledScopes.map(scope => JSON.parse(scope))).toContainEqual({ companyId: context.fixture.companyId, issueId: context.issue.id });
+      expect(events).not.toContain("settled");
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+      release(); await holding;
+      await expect(retiring).resolves.toMatchObject({ status: "failed" });
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "failed", runId: null });
+      expect(events).toContain("settled");
+    } finally {
+      release(); await holding; await retiring?.catch(() => undefined);
+      unsubscribe(); await context.service.shutdown();
+    }
+  });
+
   async function failedChatRetryFixture(
     provider: "slack" | "telegram" | "github",
     externalActorId?: string,
@@ -65644,6 +65726,58 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     }
   });
 
+  it.each(["task", "company", "startup"] as const)("bounds failed retry notice scope discovery with retained candidates (%s)", async mode => {
+    const context = await failedChatRetryFixture("telegram");
+    const other = await failedChatRetryFixture("telegram");
+    const copiedIds = Array.from({ length: 250 }, () => randomUUID());
+    const stagedIds: string[] = [];
+    try {
+      for (const target of [context, other]) {
+        const staged = await db.transaction(tx => target.service.prepareFailedChatRunRetry(tx, {
+          companyId: target.fixture.companyId, issueId: target.issue.id,
+          agentId: target.fixture.assignedAgentId, failedRunId: target.runId, initiatedByUserId: "owner-user",
+        }));
+        await target.service.processFailedChatRunRetry(staged.actionId);
+        await db.update(agentWakeupRequests).set({ status: "deferred_issue_execution" })
+          .where(eq(agentWakeupRequests.id, staged.actionId));
+        stagedIds.push(staged.actionId);
+      }
+      const [action] = await db.select().from(chatActions).where(eq(chatActions.id, stagedIds[0]));
+      const [receipt] = await readAgentWakeupRequestsById(stagedIds[0]);
+      await db.insert(chatActions).values(copiedIds.map(id => ({
+        ...action, id, providerActionId: `failed_run_retry:${id}`,
+      })));
+      await db.insert(agentWakeupRequests).values(copiedIds.map(id => ({
+        ...receipt, id, idempotencyKey: `retry-discovery-budget:${id}`,
+      })));
+      const scope = { companyId: context.fixture.companyId, issueId: context.issue.id };
+      const events: Array<Record<string, unknown>> = [], now = Date.now();
+      const capture = createDatabaseResponseCapture({ start: now - 1, end: now + 59_000 }, event => events.push(event));
+      installDatabaseResponseCapture(db, { chatActions, agentWakeupRequests }, capture);
+      let scopes: Array<{ companyId: string; issueId: string }>;
+      try {
+        scopes = await context.service.loadFailedRetryNoticeScopes(
+          mode === "task" ? scope : mode === "company" ? { companyId: scope.companyId } : undefined,
+        );
+      } finally { capture.flush(); }
+      if (mode === "startup") {
+        expect(scopes).toEqual(expect.arrayContaining([scope, {
+          companyId: other.fixture.companyId, issueId: other.issue.id,
+        }]));
+      } else {
+        expect(scopes).toEqual([scope]);
+      }
+      expect(events.at(-1)).toMatchObject({ startedQueries: mode === "task" ? 0 : 1,
+        completedQueries: mode === "task" ? 0 : 1, inFlightAtEnd: 0 });
+      expect(events.filter(event => event.event === "paperclip.db_response_capture.entry.v1")
+        .reduce((count, event) => count + Number(event.rows), 0)).toBe(mode === "task" ? 0 : scopes.length);
+    } finally {
+      await context.service.shutdown(); await other.service.shutdown();
+      await db.delete(chatActions).where(inArray(chatActions.id, copiedIds));
+      await db.delete(agentWakeupRequests).where(inArray(agentWakeupRequests.id, copiedIds));
+    }
+  });
+
   it("scopes failed retry notices and retains receipt contention without retrying settled history", async () => {
     const context = await failedChatRetryFixture("telegram");
     const other = await failedChatRetryFixture("telegram");
@@ -65677,7 +65811,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       release(); await holder;
       expect(await context.service.reconcileFailedRetryNotices({ scope }))
         .toEqual({ inserted: 1, contended: false, nextCursor: null });
-      expect(await context.service.loadFailedRetryNoticeScopes(scope)).toEqual([]);
+      expect(await context.service.loadFailedRetryNoticeScopes({ companyId: scope.companyId })).toEqual([]);
       expect(await readChatPublicationsByEndpointId(other.endpoint.id)).toEqual([]);
       await db.update(agentWakeupRequests).set({ status: "cancelled" })
         .where(eq(agentWakeupRequests.id, staged[0].actionId));
@@ -65688,7 +65822,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       })]));
       expect(await context.service.reconcileFailedRetryNotices({ scope }))
         .toEqual({ inserted: 0, contended: false, nextCursor: null });
-      expect(await context.service.loadFailedRetryNoticeScopes(scope)).toEqual([]);
+      expect(await context.service.loadFailedRetryNoticeScopes({ companyId: scope.companyId })).toEqual([]);
       await db.update(agentWakeupRequests).set({ runId: other.runId })
         .where(eq(agentWakeupRequests.id, staged[1].actionId));
       expect(await other.service.loadFailedRetryNoticeScopes({ companyId: other.fixture.companyId })).toEqual([]);
@@ -74755,6 +74889,104 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     }
   });
 
+  it.each(["task", "company", "startup"] as const)("bounds inbound notice scope discovery with denied history (%s)", async mode => {
+    const context = await deferredChatQueueFixture();
+    const other = await deferredChatQueueFixture();
+    const rejectedIds = Array.from({ length: 250 }, () => randomUUID());
+    try {
+      const [receipt] = await readAgentWakeupRequestsById(context.action.id);
+      await db.insert(chatActions).values(rejectedIds.map(id => ({
+        ...context.action, id, providerActionId: `inbound_wakeup:${id}`,
+        payload: { ...context.action.payload, commentId: randomUUID() },
+      })));
+      await db.insert(agentWakeupRequests).values(rejectedIds.map(id => ({
+        ...receipt, id, idempotencyKey: `chat-discovery-budget:${id}`,
+      })));
+      const scope = { companyId: context.fixture.companyId, issueId: context.conversation.issueId };
+      const events: Array<Record<string, unknown>> = [], now = Date.now();
+      const capture = createDatabaseResponseCapture({ start: now - 1, end: now + 59_000 }, event => events.push(event));
+      installDatabaseResponseCapture(db, { chatActions, agentWakeupRequests }, capture);
+      let scopes: Array<{ companyId: string; issueId: string }>;
+      try {
+        scopes = await context.service.loadInboundWakeNoticeScopes(
+          mode === "task" ? scope : mode === "company" ? { companyId: scope.companyId } : undefined,
+        );
+      } finally { capture.flush(); }
+      if (mode === "startup") {
+        expect(scopes).toEqual(expect.arrayContaining([scope, {
+          companyId: other.fixture.companyId, issueId: other.conversation.issueId,
+        }]));
+      } else {
+        expect(scopes).toEqual([scope]);
+      }
+      expect(events.at(-1)).toMatchObject({ startedQueries: mode === "task" ? 0 : 1,
+        completedQueries: mode === "task" ? 0 : 1, inFlightAtEnd: 0 });
+      expect(events.filter(event => event.event === "paperclip.db_response_capture.entry.v1")
+        .reduce((count, event) => count + Number(event.rows), 0)).toBe(mode === "task" ? 0 : scopes.length);
+    } finally {
+      await context.service.shutdown(); await other.service.shutdown();
+      await db.delete(chatActions).where(inArray(chatActions.id, [...rejectedIds, context.action.id]));
+      await db.delete(agentWakeupRequests).where(inArray(agentWakeupRequests.id, [...rejectedIds, context.action.id]));
+    }
+  });
+
+  it("reactivates restored ordinary input after an earlier Retry notice wake is consumed", async () => {
+    const context = await deferredChatQueueFixture();
+    const retryId = randomUUID(), intentId = randomUUID();
+    const scope = { companyId: context.fixture.companyId, issueId: context.conversation.issueId };
+    const errors: unknown[] = [], events: string[] = [];
+    const coordinator = createDeliveryWorkCoordinator({ owner: db, canRun: () => true,
+      canReconcile: () => true, onError: error => errors.push(error) });
+    let unsubscribe = () => {};
+    try {
+      const [receipt] = await readAgentWakeupRequestsById(context.action.id);
+      await db.insert(chatActions).values({ ...context.action, id: retryId,
+        kind: "failed_run_retry", status: "failed", providerActionId: `task-retry-restore:${retryId}`,
+        payload: { issueId: scope.issueId, taskRetryIntentId: intentId },
+      });
+      await db.insert(agentWakeupRequests).values({ ...receipt, id: retryId, status: "failed",
+        idempotencyKey: `task-retry-restore:${retryId}`,
+      });
+      await db.transaction(tx => claimTaskRetryInput(tx, { companyId: scope.companyId,
+        retryActionId: retryId, sourceActionIds: [context.action.id] }));
+      expect((await readAgentWakeupRequestsById(context.action.id))[0]).toMatchObject({
+        status: "coalesced", runId: null, payload: { coalescedIntoWakeupRequestId: retryId },
+      });
+      vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"], shouldAdvanceTime: true });
+      const settle = async () => vi.waitFor(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(idleWorkSnapshot().active).toBe(0); expect(coordinator.nextWakeAt()).toBeNull();
+      }, { timeout: 10_000 });
+      await chatInboundWakeNoticeWork(context.service).register(coordinator, () => true).ready;
+      await db.transaction(tx => signalDatabaseWork(tx, DELIVERY_QUEUES.chatInboundWakeNotices, JSON.stringify(scope)));
+      await settle();
+      expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([]);
+      const select = vi.spyOn(db, "select"), transaction = vi.spyOn(db, "transaction");
+      try {
+        await vi.advanceTimersByTimeAsync(120_000);
+        expect(select).not.toHaveBeenCalled(); expect(transaction).not.toHaveBeenCalled();
+      } finally { select.mockRestore(); transaction.mockRestore(); }
+      unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+        if ([...scopes ?? []].some(value => value !== "*" && JSON.parse(value).companyId === scope.companyId)) events.push(event);
+      });
+      await releaseUnadmittedTaskRetryInput(db, { companyId: scope.companyId, retryActionId: retryId });
+      expect((await readAgentWakeupRequestsById(context.action.id))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+      expect(events).toContain("intent"); expect(events).toContain("settled");
+      await vi.waitFor(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+        expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([expect.objectContaining({
+          commentId: context.action.payload.commentId, payload: { text: "Your follow-up is queued.", progressState: "queued" },
+        })]);
+        expect(coordinator.nextWakeAt()).toBeNull(); expect(idleWorkSnapshot().active).toBe(0);
+      }, { timeout: 10_000 });
+      expect(errors).toEqual([]);
+    } finally {
+      unsubscribe(); await coordinator.stop(); vi.useRealTimers(); await context.service.shutdown();
+      await db.delete(chatActions).where(eq(chatActions.id, retryId));
+      await db.delete(agentWakeupRequests).where(eq(agentWakeupRequests.id, retryId));
+    }
+  });
+
   it("isolates pre-run FIFO reconciliation scopes and exhausts published history", async () => {
     const first = await deferredChatQueueFixture();
     const second = await deferredChatQueueFixture();
@@ -74763,7 +74995,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(await first.service.loadInboundWakeNoticeScopes({ companyId: scope.companyId })).toEqual([scope]);
       expect(await first.service.reconcileInboundWakeNotices({ scope })).toEqual({ inserted: 1, contended: false, nextCursor: null });
       expect(await readChatPublicationsByEndpointId(second.endpoint.id)).toEqual([]);
-      expect(await first.service.loadInboundWakeNoticeScopes(scope)).toEqual([]);
+      expect(await first.service.loadInboundWakeNoticeScopes({ companyId: scope.companyId })).toEqual([]);
       expect(await first.service.reconcileInboundWakeNotices({ scope })).toEqual({ inserted: 0, contended: false, nextCursor: null });
       expect(await second.service.reconcileInboundWakeNotices({
         scope: { companyId: second.fixture.companyId, issueId: second.conversation.issueId },
@@ -74791,7 +75023,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       expect(await readChatPublicationsByEndpointId(context.endpoint.id)).toEqual([]);
       release(); await holder;
       expect(await context.service.reconcileInboundWakeNotices({ scope })).toEqual({ inserted: 0, contended: false, nextCursor: null });
-      expect(await context.service.loadInboundWakeNoticeScopes(scope)).toEqual([]);
+      expect(await context.service.loadInboundWakeNoticeScopes({ companyId: scope.companyId })).toEqual([]);
     } finally {
       release(); await holder; await context.service.shutdown();
     }
