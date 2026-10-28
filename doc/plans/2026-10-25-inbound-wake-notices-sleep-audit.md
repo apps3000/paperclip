@@ -367,3 +367,92 @@ transaction behavior rather than claiming those receipts cannot be shared.
 Final producer disposition, updated acceptance, actual landed-parent integration,
 and fresh exact-head remote gates remain required. No complete local repository
 matrix, live provider, host/database suspension, or savings claim is made.
+
+
+## Shared retry-receipt producer gap resolved (October 28)
+
+The current preparation adopts verified cancellation parent
+`60ba892ae9fc5faaf8cd0833694b4a66c13323c3`. Its complete original inbound-notice
+baseline patch remains identical through that parent update. The following
+producer repair closes the explicitly open question above before this owner
+is published.
+
+`findExistingDeferredWake` can select a deferred retry receipt for a later
+ordinary admission with matching task, conversation, and actor. The retry's own
+`allowRunCoalescing: false` controls its initial admission, not that later read.
+Ordinary receipt resolution follows `coalescedIntoWakeupRequestId` to its owner;
+owner retirement can therefore change an ordinary notice. Do not exempt retry
+writers merely because their initial admission disables coalescing.
+
+Two already-implemented writer fixes are moved forward from the following
+failed-retry slice (#17649, source `b47169855cc712e029df7e5c4c34f7b6fa04b9d4`):
+
+- The durable retry authorization callback registers ordinary-notice work after
+  validation and before its caller writes the receipt. This keeps the contract
+  central for both real heartbeat admission and supported callback-owned writes.
+- Retry authorization denial retires the exact unadmitted receipt in a transaction
+  that registers its company/task notice intent before the existing guarded update.
+  Pending-status, absent-run, and request-correlation conditions are preserved.
+
+No new worker, table, scheduler, polling fallback, or per-caller recovery wrapper
+is added. These production hunks match the already-existing following slice.
+Its remaining failed-retry projection and lifecycle/lease producers keep their
+separate ownership. Ordinary notice authorization does not read native lease or
+coordinator retry eligibility, so those later predicates are not copied here.
+
+Two new real producer regressions fail before repair and pass afterward:
+
+1. A supported callback authorizes and writes a real deferred retry receipt in
+   its own transaction. There was no notice intent before the write. The fixed
+   callback emits intent before the write and settlement after outer commit.
+2. Real heartbeat admission creates the retry receipt. After actual retry receipt
+   reconciliation, denial reaches its conditional retirement. A second PostgreSQL
+   transaction holds that receipt row: the fixed writer emits exact company/task
+   intent while the outside connection still sees deferred status, remains unsettled
+   while blocked, then publishes settlement only after the failed-status write commits.
+
+These verify actual producers and transaction timing. They do not claim a complete
+mixed ordinary/retry ingress walkthrough; the admission reader, receipt resolver,
+scoped consumer tests, and the shared owner writes establish the audited boundary.
+The first lock fixture acquired the row too early and blocked admission itself;
+that invalid before-fix attempt is preserved at
+`/tmp/sleep30-retry-owner-red.log`. The corrected missing-intent failure is
+`/tmp/sleep30-retry-owner-actual-red.log`. The callback failure is
+`/tmp/sleep30-retry-admission-red.log`; both pass together in
+`/tmp/sleep30-retry-producers-green.log`.
+
+Moving the callback contract also exposes the existing budget-refusal test mock's
+root `request.authorize(db)` call. The real writer passes its transaction. The
+local still-budget-blocked case failed with no skipped receipt and a contended
+retry classification (`/tmp/sleep30-retry-budget-red.log`). Its correction is the
+same transaction fixture fix already present in #17649: authorize and persist
+inside one transaction. All requester, comment, skipped-status, and budget checks
+remain; production budget behavior is unchanged. The reusable deferred-retry
+fixture is copied from that following slice for the two new producer cases.
+When reconciling #17649, retain one identical helper and do not duplicate it.
+
+### Final current-parent acceptance
+
+**264 distinct selected cases pass**, with separate newly created PostgreSQL
+fixtures for reconstruction, broader retries, and cancellation consumers:
+
+- **142 complete consumer cases** across cancellation/run control, app admission
+  wiring, wake admission use cases, and queued-comment admission use cases.
+- **50 selected ordinary-notice cases**, including both new producer regressions;
+  the other 1,598 chat cases were skipped.
+- **72 different retry cases**, covering the full newer-input budget-hold family,
+  current GitHub Retry, and persisted Retry authority loss; the other 1,576 chat
+  cases were skipped. These selected names do not overlap the 50-case group.
+
+Server typechecking, build, and module-boundary checks pass. The tests under
+`src/__tests__` were executed separately from production typechecking. The exact
+commands, fixtures, logs, and zero exit receipts are in
+`/tmp/sleep30-final-acceptance-command.json` and `/tmp/sleep30-final-*`.
+`/tmp/sleep30-final-tested-source-sha256.json` records the 20 owned source/test
+hashes held stable throughout the final validation.
+
+The earlier 190-case baseline and older full-suite counts retain their stated
+revision scope and are not added to 264. This completes the named producer audit
+for this owner; actual landed-parent reconciliation and fresh exact-head CI/review
+remain publication and merge gates. There is no full local repository matrix,
+live provider tenant, external-alarm, physical suspension, or savings claim.

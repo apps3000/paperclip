@@ -61697,6 +61697,126 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
     );
   });
 
+  async function deferredFailedRetryNoticeFixture(wakeOnDemand = true) {
+    const context = await failedChatRetryFixture("telegram", undefined, true);
+    const companyId = context.fixture.companyId, issueId = context.issue.id, leaseId = randomUUID();
+    await db.update(heartbeatRuns).set({ runtimeMode: "native", nativeIssueId: issueId,
+      nativePhase: "terminal_failure", runnerProfileJson: {},
+      resultJson: { workspaceRestoreFailure: "restore_failed", workspaceRestoreRecovery: {
+        schema: "paperclip.workspace-restore-recovery.v1", runId: context.runId, leaseIds: [leaseId],
+      } },
+    }).where(eq(heartbeatRuns.id, context.runId));
+    await db.insert(nativeRunFinalizations).values({ companyId, issueId, runId: context.runId, phase: "terminal_failure" });
+    await db.insert(environmentLeases).values({ id: leaseId, companyId, issueId,
+      heartbeatRunId: context.runId, provider: "daytona", providerLeaseId: randomUUID(),
+      status: "pending_cleanup", cleanupStatus: "failed", leasePolicy: "retain_on_failure",
+      metadata: { remoteCwd: "/home/daytona/paperclip-workspace", pendingCleanupInFlight: false },
+    });
+    await db.insert(issueRecoveryActions).values({ companyId, sourceIssueId: issueId,
+      kind: "active_run_watchdog", status: "resolved", ownerType: "system",
+      cause: "native_continuation_requires_reconciliation", fingerprint: randomUUID(),
+      nextAction: "Verify and preserve the retained source before continuing.",
+      evidence: { runId: context.runId, automaticRecovery: { replay: "blocked" },
+        workspaceRestoreRecovery: { schema: "paperclip.workspace-restore-recovery.v1", leaseIds: [leaseId] },
+        historicalWorkspaceSource: { schema: "paperclip.historical-workspace-source.v1", runId: context.runId, leaseIds: [leaseId] },
+        systemRecovery: { ...createSystemRecovery(context.runId), state: "exhausted", attempts: 2, retriesUsed: 1,
+          attemptId: randomUUID(), firstFailureAt: Date.now() - 1000, deadlineAt: Date.now() + 60_000,
+          preservationOperationIds: [randomUUID()] },
+      },
+    });
+    const retry = await requestTaskRetry({ db, companyId, issueId, actorId: "owner-user",
+      actorSource: "cloud_tenant", observedRunId: context.runId, idempotencyKey: randomUUID(),
+      prepareChatRetry: context.service.prepareFailedChatRunRetry });
+    await db.update(agents).set({ adapterType: "paperclip_runner", status: "running",
+      runtimeConfig: { heartbeat: { wakeOnDemand, maxConcurrentRuns: 1 } },
+    }).where(eq(agents.id, context.fixture.assignedAgentId));
+    await db.insert(heartbeatRuns).values({ companyId, agentId: context.fixture.assignedAgentId,
+      status: "running", startedAt: new Date() });
+    context.wakeup.mockImplementation(heartbeatService(db).wakeup);
+    return { ...context, retry, admit: () => context.service.processFailedChatRunRetry(retry.chatActionId!) };
+  }
+
+  it("registers ordinary-notice work through the retry admission transaction", async () => {
+    const context = await deferredFailedRetryNoticeFixture();
+    const events: string[] = [];
+    let eventsBeforeWrite: string[] = [];
+    const unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+      if ([...scopes ?? []].some(scope => scope !== "*" && JSON.parse(scope).companyId === context.fixture.companyId)) events.push(event);
+    });
+    context.wakeup.mockImplementationOnce(async (_agentId, options) => {
+      const request = options!.durableChatRequest!;
+      await db.transaction(async tx => {
+        events.length = 0;
+        await request.authorize(tx as unknown as Parameters<typeof request.authorize>[0]);
+        eventsBeforeWrite = [...events];
+        await tx.insert(agentWakeupRequests).values({
+          id: request.id, companyId: context.fixture.companyId, agentId: request.agentId,
+          source: options!.source, triggerDetail: options!.triggerDetail, reason: options!.reason,
+          requestedByActorType: request.requestedByActorType, requestedByActorId: request.requestedByActorId,
+          requestedAt: request.requestedAt, idempotencyKey: request.idempotencyKey,
+          status: "deferred_issue_execution", payload: { ...options!.payload,
+            taskRetryRequestId: context.retry.requestId, _paperclipWakeContext: options!.contextSnapshot },
+        });
+      });
+      return null;
+    });
+    try {
+      await expect(context.admit()).resolves.toMatchObject({ status: "deferred" });
+      expect(eventsBeforeWrite).toContain("intent");
+      expect(eventsBeforeWrite).not.toContain("settled");
+      expect(events).toContain("settled");
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+    } finally { unsubscribe(); await context.service.shutdown(); }
+  });
+
+  it("registers ordinary-notice intent before a retry-owned receipt is retired", async () => {
+    const context = await deferredFailedRetryNoticeFixture();
+    let release = () => {};
+    let holding: Promise<unknown> | undefined;
+    let retiring: ReturnType<typeof context.admit> | undefined;
+    let unsubscribe = () => {};
+    const events: string[] = [];
+    const signalledScopes: string[] = [];
+    try {
+      expect(await context.admit()).toMatchObject({ status: "deferred" });
+      await reconcileTaskChatRetryReceipts(db);
+      context.wakeup.mockClear();
+      let locked!: () => void;
+      const acquired = new Promise<void>(resolve => { locked = resolve; });
+      const held = new Promise<void>(resolve => { release = resolve; });
+      context.wakeup.mockImplementationOnce(async () => {
+        holding = db.transaction(async tx => {
+          await tx.select().from(agentWakeupRequests).where(eq(agentWakeupRequests.id, context.retry.chatActionId!)).for("update");
+          locked();
+          await held;
+        });
+        await acquired;
+        throw Object.assign(new Error("denied at resume"), {
+          details: { code: "chat_failed_run_retry_not_authorized" },
+        });
+      });
+      unsubscribe = subscribeDatabaseWork(db, DELIVERY_QUEUES.chatInboundWakeNotices, (event, scopes) => {
+        if ([...scopes ?? []].some(scope => scope !== "*" && JSON.parse(scope).companyId === context.fixture.companyId)) {
+          events.push(event); signalledScopes.push(...scopes ?? []);
+        }
+      });
+      retiring = context.admit();
+      void retiring.catch(() => undefined);
+      await vi.waitFor(() => expect(context.wakeup).toHaveBeenCalledOnce());
+      await vi.waitFor(() => expect(events).toContain("intent"), { timeout: 2000 });
+      expect(signalledScopes.map(scope => JSON.parse(scope))).toContainEqual({ companyId: context.fixture.companyId, issueId: context.issue.id });
+      expect(events).not.toContain("settled");
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "deferred_issue_execution", runId: null });
+      release(); await holding;
+      await expect(retiring).resolves.toMatchObject({ status: "failed" });
+      expect((await readAgentWakeupRequestsById(context.retry.chatActionId!))[0]).toMatchObject({ status: "failed", runId: null });
+      expect(events).toContain("settled");
+    } finally {
+      release(); await holding; await retiring?.catch(() => undefined);
+      unsubscribe(); await context.service.shutdown();
+    }
+  });
+
   async function failedChatRetryFixture(
     provider: "slack" | "telegram" | "github",
     externalActorId?: string,
@@ -62637,13 +62757,15 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         context.wakeup.mockImplementation(heartbeatService(db).wakeup);
       } else context.wakeup.mockImplementation(async (agentId, opts) => {
         const request = opts.durableChatRequest!;
-        await request.authorize(db);
-        await db.insert(agentWakeupRequests).values({ id: request.id, companyId,
-          agentId, source: opts.source!, triggerDetail: opts.triggerDetail, reason: "budget.blocked",
-          requestedByActorType: request.requestedByActorType, requestedByActorId: request.requestedByActorId,
-          requestedAt: request.requestedAt, idempotencyKey: request.idempotencyKey,
-          payload: { ...opts.payload, executionWait: { scopeType: "agent", scopeId: agentId } },
-          status: "skipped", finishedAt: new Date() });
+        await db.transaction(async tx => {
+          await request.authorize(tx);
+          await tx.insert(agentWakeupRequests).values({ id: request.id, companyId,
+            agentId, source: opts.source!, triggerDetail: opts.triggerDetail, reason: "budget.blocked",
+            requestedByActorType: request.requestedByActorType, requestedByActorId: request.requestedByActorId,
+            requestedAt: request.requestedAt, idempotencyKey: request.idempotencyKey,
+            payload: { ...opts.payload, executionWait: { scopeType: "agent", scopeId: agentId } },
+            status: "skipped", finishedAt: new Date() });
+        });
         return null;
       });
       if (realBudgetIngress) {

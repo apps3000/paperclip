@@ -1,3 +1,4 @@
+import { notifyChatInboundWakeNotices } from "../chat-inbound-wake-notice-notifications.js";
 import { safeChatWakeAuthorityReason, type ChatWakeAuthorityReason } from "./inbound/wakeup-authorization-error.js";
 import { adapterExecutionControls } from "../adapter-execution-control.js";
 import { admitExplicitNativeContinuation } from "../explicit-native-continuation.js";
@@ -1871,6 +1872,7 @@ export function createChatFailedRunRetry(db: Db, options: ChatFailedRunRetryOpti
                 typeof claimed.payload.taskRetryIntentId === "string" ? claimed.payload.taskRetryIntentId : undefined,
                 true, // The durable wake callback validates admission; later phases recheck containment.
               );
+              await notifyChatInboundWakeNotices(tx, { companyId: scope.companyId, issueId: scope.issueId });
             },
             onAdmitted: async (tx, receipt) => {
               if (!source.taskRetryInput) return;
@@ -1915,12 +1917,17 @@ export function createChatFailedRunRetry(db: Db, options: ChatFailedRunRetryOpti
             receipt.payload?.taskRetryRequestId === claimed.payload.taskRetryIntentId) {
           // Receipt existence proves the earlier wait, not current authority.
           // Retire only this unadmitted wake; an admitted run keeps its history.
-          await db.update(agentWakeupRequests).set({
-            status: "failed", error: "chat_failed_run_retry_not_authorized",
-            finishedAt: new Date(), updatedAt: new Date(),
-          }).where(and(eq(agentWakeupRequests.id, receipt.id),
-            eq(agentWakeupRequests.companyId, claimed.companyId),
-            eq(agentWakeupRequests.status, "deferred_issue_execution"), isNull(agentWakeupRequests.runId)));
+          await db.transaction(async tx => {
+            await notifyChatInboundWakeNotices(tx, {
+              companyId: claimed.companyId, issueId: String(claimed.payload.issueId),
+            });
+            await tx.update(agentWakeupRequests).set({
+              status: "failed", error: "chat_failed_run_retry_not_authorized",
+              finishedAt: new Date(), updatedAt: new Date(),
+            }).where(and(eq(agentWakeupRequests.id, receipt.id),
+              eq(agentWakeupRequests.companyId, claimed.companyId),
+              eq(agentWakeupRequests.status, "deferred_issue_execution"), isNull(agentWakeupRequests.runId)));
+          });
           return settle("failed", { code: "failed_chat_retry_not_authorized", attemptCount });
         }
         return settle(["skipped", "failed", "cancelled"].includes(receipt.status) ? "failed" : "processed", {
