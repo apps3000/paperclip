@@ -2752,13 +2752,6 @@
       "when": 1793060791738,
       "tag": "0394_long_cargill",
       "breakpoints": true
-    },
-    {
-      "idx": 395,
-      "version": "7",
-      "when": 1793060791739,
-      "tag": "0395_jittery_norrin_radd",
-      "breakpoints": true
     }
   ]
 }
