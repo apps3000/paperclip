@@ -185,3 +185,66 @@ merged-PR confirmation are separate remaining duties.
 All earlier stack CI/review findings, remaining original inventory items, final
 master reconciliation, and each latest-head PR gate remain required. No merge is
 authorized or performed by this migration stack.
+
+
+## Current-parent acceptance (October 28)
+
+The existing branch was merged normally with published review-projection parent
+`1453a4447c0d4d33f713ae3e00734c7950f95426` at
+`3d7f163bc5259b60f9bd19b7fc90b402f0a6e925`. Both complete added/removed patches
+and every unrelated parent blob were preserved. This slice adds no migration;
+the entire parent database tree, including migration history through 0403, is
+byte-identical. The batch-size option already exists in the current parent;
+this slice selects five without changing other consumers' default bound.
+
+At that integration, 751 distinct cases passed:
+
+- 274 complete GitHub review workflow cases.
+- 294 other GitHub-named provider, installation, recovery, attachment, and
+  publication cases, including all 19 new recovery worker cases and all six
+  stop-before-transport variants.
+- 30 complete terminal interaction publication cases.
+- 145 complete voice-session integration and inbound retention cases.
+- Eight current startup/hostname wiring cases.
+
+The first workflow filter omitted the separate new recovery group. The saved
+verbose case list exposed that gap before acceptance was declared. A second
+selection in another fresh database ran all remaining GitHub-named cases while
+excluding the already-tested review group. The two passed-name sets have no
+overlap. The first command filtered 1,504 unrelated cases; the complementary
+command filtered 1,484 cases. These are focused selections, not the full chat
+suite or full repository suite. The original commands and results remain in the
+verification record.
+
+Coverage includes unconfigured/Cloud/disabled quiet, saved-deadline quiet,
+authenticated callback-only admission, real installation and credential changes,
+restart/drain/standby, nested commit/rollback, failed reconstruction, 106 saved
+deadlines with five-item fair batches, held HTTP with independent queue progress,
+joined shutdown, exact-attempt known-unsent restoration, and protection of a
+newer receipt. Existing authority, signature, source, and replay checks also pass.
+
+Database build, server production typecheck/build, module boundaries, and target
+migration order passed. Five separate fresh PostgreSQL fixtures received the
+unchanged parent migrations through 0403. The audit follow-up changes only this
+document; accepted source, tests, and migration hashes remain unchanged.
+
+The actual parent merge and fresh current-head CI/Greptile checks remain required.
+Direct GitHub Apps retain their real one-minute external recovery obligation;
+Cloud relay and disabled endpoints remain excluded. This does not expand Cloud
+alarm coverage or prove deployed host/database suspension or fleet savings.
+
+
+## Parent startup boundary correction
+
+The parent stale-review PR received a valid required review finding: its legacy
+maintenance source slice used a removed end marker. The parent reproduced that
+with explicit bounds, then fixed the marker and passed all 13 startup tests.
+This webhook-recovery slice removes that entire coordinator and timer. During
+the normal parent merge, its obsolete boundary inspection conflicts with this
+slice's existing assertions that both symbols are absent. Keep those absence
+assertions: there is no remaining coordinator section to slice. All other parent
+changes, including its audit and unrelated onboarding smoke coverage, are carried
+unchanged. The complete server, package, and UI source trees still match the
+751-case accepted revision; the eight startup cases are also rerun after resolving
+this overlap. This is a superseded test for removed functionality, not a waiver
+of an unresolved production finding. Fresh review and CI remain required.
