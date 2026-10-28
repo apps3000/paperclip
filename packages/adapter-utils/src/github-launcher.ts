@@ -43,9 +43,9 @@ async function main() {
     fs.mkdirSync(configRoot, { recursive: true, mode: 0o700 });
     configDirectory = fs.mkdtempSync(path.join(configRoot, 'paperclip-github-operation-'));
     fs.chmodSync(configDirectory, 0o700);
+    configReady = true;
     process.once('exit', () => { try { fs.rmSync(configDirectory, { recursive: true, force: true }); } catch {} });
     fs.writeFileSync(path.join(configDirectory, 'gitconfig'), '[user]\n\tname = Paperclip\n\temail = noreply@paperclip.ing\n', { mode: 0o600 });
-    configReady = true;
   } catch { diagnostic('configuration_directory_unavailable'); }
   {
     for (const key of Object.keys(env)) {
