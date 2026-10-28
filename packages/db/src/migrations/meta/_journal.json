@@ -2773,13 +2773,6 @@
       "when": 1793060791741,
       "tag": "0397_fearless_supernaut",
       "breakpoints": true
-    },
-    {
-      "idx": 398,
-      "version": "7",
-      "when": 1793060791742,
-      "tag": "0398_breezy_mongu",
-      "breakpoints": true
     }
   ]
 }
