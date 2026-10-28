@@ -555,3 +555,41 @@ final results/exit receipts are `/tmp/sleep30-restore-input-final-{notices,retri
 and `/tmp/sleep30-restore-input-{types,build,boundaries}.*`.
 Fresh current-head remote CI and Greptile 5/5 remain mandatory. No full local
 repository acceptance, live provider wake or physical suspension is claimed.
+
+
+### Reconcile durable comment writes on current master
+
+After the restoration repair earned exact-head Greptile 5/5, master landed
+#17960 at `d30c8f42b842327ee1c18c41a2efd6ba623da5cd`. Its 62 changed paths
+include durable comment receipts and task-before-comment mutation locking.
+The normal merge `1720b685d9d5fb9cb4377223fdaa0a9fae2aff9c` resolves two conflicts:
+both route imports remain; soft deletion takes the upstream task lock before
+our source-comment row lock and awaited notice intent. Receipt completion and
+task deletion therefore retain their common lock order.
+
+Both branches' complete added/removed patches are preserved in both directions;
+only diff blob hashes/hunk metadata are excluded from the comparison. All
+non-overlap upstream blobs and deleted paths match master exactly. This is not
+a claim of full-context or binary identity for the two overlapping files.
+`/tmp/sleep30-durable-comment-master-composition-proof.json` records the proof,
+including the corrected check for an upstream-deleted UI hook.
+
+Combined revision acceptance passes **202 distinct cases**: all 148 cases in
+three durable receipt/reopen/wakeup suites, including the real embedded
+PostgreSQL receipt concurrency suite, plus 54 notice/FIFO/producer cases on a
+fresh external PostgreSQL fixture (1,598 skipped). Server typechecking, build
+and module boundaries pass. Logs/exit receipts use
+`/tmp/sleep30-durable-comment-{receipt-acceptance,notices,types,build,boundaries}.*`.
+The earlier 126-case restoration and 267-case discovery records retain their
+original revision scopes. A following documentation-only commit leaves the
+21 owned server source/test hashes unchanged, as recorded in
+`/tmp/sleep30-durable-comment-tested-source-sha256.json`.
+
+The earlier `661f2f6da8` CI run also failed the existing voice report reconstruction
+quiet assertion after 105 fetches (one late transaction). All 15 voice lifecycle
+cases pass unchanged on a fresh local database. No assertion or production code
+was relaxed and no CI retry was used. This is not a proven root cause; the full
+current-head CI must pass. The original failure and local result remain in
+`/tmp/sleep30-discovery-ci-server3-direct.log` and `/tmp/sleep30-voice-ci-baseline.log`.
+Fresh CI and review are required for the final publication, including when an
+older head already earned 5/5. No deployed sleep claim is added.

@@ -514,6 +514,12 @@ Gaps: Legacy/native/channel runtimes separately qualify; preserve original undis
 
 Capability ID: `recovery/reconnect`.
 
+Browser autosave and resend preserve the existing actor, task and idempotency
+contracts. They grant no new agent access. Retrying a document or decision still
+requires its normal authorized operation; an uncertain outcome requires saved-result
+verification rather than an unguarded repeat.
+
+
 Review: `operation-reviewed`.
 
 Browser transport recovery refetches persisted state without implying runner recovery.
