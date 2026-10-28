@@ -109,9 +109,12 @@ This existing attempt-recovery slice is prepared on consent candidate
 while inheriting the parent's bounded consent reconstruction and retention
 acceptance repair. The normal merge keeps the complete parent stack history
 and the attempt appendix. The initial explicit-base composition was recorded
-at `163a81d1`; the parent follow-up is included at `642095e2`. This is local
-preparation and must be reconciled with the actual landed consent/master before
-publication. No additional worker refactor or new background duty is introduced.
+at `163a81d1`; the parent follow-up is included at `642095e2`. This preparation may be published on that exact pending parent to run CI in
+parallel. Merge still requires the consent PR to have landed, an ordinary clean
+Git composition onto actual master, and proof that only the complete owned
+attempt patch is added while all master changes survive. A normal ancestry
+merge remains necessary if that composition is not clean. No additional worker
+refactor or new background duty is introduced.
 
 Current local acceptance passes 239 distinct selected cases: 221 across the
 complete transfer/publication/consent/consent-runtime/app-wiring suites, 16
