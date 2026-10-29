@@ -274,3 +274,31 @@ signal at 23:50:45Z, then reported cancellation at 23:50:57Z. It has no final
 assertion verdict and is not counted as passing. The log is retained; no old-head
 retry is requested because the required style correction creates a new head.
 The full new-head CI must run independently.
+
+## Current master and append-only parent adoption
+
+The parent retry-cancellation slice now carries actual #17666 squash
+`7afee8f0622e273d10506b0febfb68f143d168b1`, the new Coordinator and Runner
+changes, and the regenerated append-only migration 0406. A clean normal merge
+preserves both complete added/removed patches and every unrelated upstream blob.
+The complete database subtree equals parent
+`48b3fcb83f305616df02a4337a42ec0867bb4b80`; this slice adds no migration.
+The parent audit follow-up changes documentation only.
+
+Source `654c4694d5fad8ebfcc1219bc4a76ec94f4516b8` passes all **268 cases in six
+complete files**, with no skipped cases, in 45.38 seconds. Four separate fresh
+PostgreSQL 17 databases migrated through 0406 prevent fixture interference.
+Instruction, directory, and recovery suites use their supported external paths.
+The embedded-only lifecycle suite temporarily used its own external fixture
+because this host cannot start more embedded clusters. Its fixture import was
+restored byte for byte afterward. All assertions and original timing limits were
+unchanged. This is qualified external-database acceptance; fresh CI still must
+pass with the original embedded fixture. Database build, server typecheck/build,
+module boundaries, target migration order, and all four fresh migrations pass.
+No new code comments remain relative to this parent.
+
+Prior head `a1a0ae5b02e8a650408bf4c55ae99071c3bff59c` had passing CI, Greptile
+5/5 and Ponytail 5/5. Those results become historical when the new head is
+published. Keep the old runner interruption and all earlier failures in the
+ledger. The current parent must merge first, and the new published head needs
+fresh exact-head reviews and CI. These results do not establish deployed sleep.
