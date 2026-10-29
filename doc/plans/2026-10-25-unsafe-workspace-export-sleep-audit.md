@@ -280,3 +280,13 @@ worker, ownership and affected-consumer behavior. Publication remains held until
 the actual prerequisite merges and its ancestry is reconciled. Fresh
 current-head CI and reviews remain required. These tests do not establish
 deployed host/database suspension, external wake delivery or fleet savings.
+
+
+## Prepared parent carrying published cleanup ancestry
+
+Normal merge `57ddb838cc93d5d8d0e7f8a0c2d1a2beed8b4394` adopts prepared parent
+`790a27d28f23be0f436eb96a884dc7988ff10823`. Its source equals the prior accepted parent;
+only parent documentation and ancestry change. Complete server, package, UI
+and test trees remain identical to the accepted 2188-case source, including
+the whole 0410 database tree. Publication remains held for the actual
+automatic-review merge and fresh published-head CI and reviews.
