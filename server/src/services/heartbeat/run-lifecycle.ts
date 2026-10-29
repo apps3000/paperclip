@@ -2364,7 +2364,7 @@ export function createHeartbeatLifecycle(db: Db, dependencies: HeartbeatLifecycl
     const contextSnapshot = parseObject(run.contextSnapshot);
     const taskKey = deriveTaskKeyWithHeartbeatFallback(contextSnapshot, null);
     const sessionBefore = await resolveSessionBeforeForWakeup(agent, taskKey);
-    const retryContextSnapshot = withRecoveryContext(
+    const retryContextSnapshot: Record<string, unknown> = withRecoveryContext(
       {
         ...contextSnapshot,
         retryOfRunId: run.id,
@@ -2374,6 +2374,9 @@ export function createHeartbeatLifecycle(db: Db, dependencies: HeartbeatLifecycl
       },
       "status_only",
     );
+    delete retryContextSnapshot.skillVersions;
+    delete retryContextSnapshot.skillSelectionSnapshot;
+    delete retryContextSnapshot.shadowedSkills;
     const responsibleUserId = await resolveResponsibleUserIdForRunContext(
       run,
       retryContextSnapshot,
