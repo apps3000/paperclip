@@ -323,3 +323,27 @@ Types, server build, boundaries, and the actual current migration-order check
 also pass. The lifecycle fixture qualification above still applies; the file was
 restored exactly. The already-published parent used a different, correct command
 layout and was not affected by this runner error.
+
+## Bounded retry-cancellation parent acceptance
+
+A clean normal merge adopts published parent
+`405e533394b26215e22d0452e9b0207d3f784a79`, including its bounded reconstruction
+and durable browser reply check. Both complete added/removed patches and every
+unrelated upstream blob are preserved. The entire database subtree still equals
+that parent: this slice has no schema or migration change.
+
+Source `9fb75e508f06b05b740099403ce021a61e7c6603` passes all **268 cases in six
+complete files**, without skips, in 41.89 seconds. Four unused fresh PostgreSQL 17
+databases migrated through 0406 isolate the fixtures. The same qualified temporary
+external lifecycle fixture is restored byte for byte. Actual database build,
+server types/build, module boundaries and exact-current migration order pass.
+The earlier local runner failure and corrected evidence remain in the preceding
+section; this run uses commands selected by name.
+
+Stacked publication may run this non-migration slice's independent CI while the
+parent finishes. It does not allow merging into an unmerged parent. At merge,
+the exact reviewed parent must have landed, the target must be master, and the
+actual combined tree must preserve the complete owned patch and upstream changes.
+The subsequent index-bearing child still needs the actual parent migration squash
+ancestry before publication. Old reviews on this slice's prior head do not count
+for the new published head.
