@@ -1,7 +1,7 @@
 # Historical unsafe workspace export recovery
 
 Current integration: 2026-10-29. Prepared parent: automatic completion-review
-retirement #17680 at published `40f84082526d6ba405f206475c919c3b4b67ec4c`.
+retirement #17680 at published `181bf800a79449961e09c995f2785dd7f8060bb3`.
 Earlier draft parent: `be668fb975f119efeb4830405d4bb1ab65791f87`.
 Startup registers the worker when maintenance is enabled. The periodic reaper
 skips this duty. Explicit/manual recovery remains available. Fresh published-head
@@ -326,3 +326,24 @@ scope, the additional 72-case corpus with its same-database repeat, and the
 complete 0410 database tree. Only parent documentation and ancestry change.
 Publication stays held until the actual automatic-review squash and its
 ancestry reconciliation. Fresh current-head CI and reviews remain required.
+
+
+## Inherited CI observation correction and independent master assertion
+
+Normal integration `4d51231abe8b68c21ce896d0d2ac16865978c8ab` adopts
+published automatic-review parent `181bf800a79449961e09c995f2785dd7f8060bb3`.
+The only source changes are the initial GitHub idle poll's established
+five-second observation argument and master's company-skill cleanup assertion.
+All production source, all packages including migration 0410, all 24 accepted
+suite files and the additional 72-case corpus remain byte-identical. The
+previous acceptance keeps that precise source scope; it is not rerun or
+recounted here. The parent audit retains the original CI failure and controlled
+comparison, including its inability to reconstruct the exact CI token timeline.
+
+The two native-presentation GitHub idle variants pass in 15.14 seconds on this
+runtime. All six cases in the complete cleanup-removal suite pass in 8.31 seconds.
+Two separate fresh PostgreSQL 17 fixtures migrate through 0410. These suites
+use supported external URLs with no source adaptation. The other 1779 cases
+in the large chat file are outside the focused selection and are not claimed.
+This does not claim the parent's full 274-case workflow was rerun on this slice.
+Publication remains held for the actual prerequisite merge and fresh CI/reviews.
