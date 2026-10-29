@@ -111,3 +111,39 @@ native finalizer telemetry, external-chat response waits and governed chat
 milestones. Combined with the 116 owner/startup cases, 351 tests passed without
 skips. Workspace typecheck and build also passed. Remote CI and review remain
 required for the published head. No workflow, lockfile or schema change is made.
+
+
+## Current parent and acceptance (2026-10-29)
+
+Normal integration with the verified cancelled-preservation parent yields
+`18809268f6292462bb8dc7aea4d081eca4851328`. Every substantive owned edit is preserved,
+and unrelated upstream blobs are unchanged. The entire database source tree
+is identical to the parent; this slice adds no migration or table and preserves
+its 0407 history and five newest snapshots. No new code comments are added.
+
+All **443 cases across seven complete files pass with no skips**, in 47.08
+seconds. The corpus includes its existing native/legacy fixture matrix; fixtures
+inside one matrix case are not added again to the test count. Exact counts:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/services/native-runtime/external-chat-wait.integration.test.ts | 234 |
+| src/__tests__/native-status-arbiter-corpus.test.ts | 56 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/__tests__/chat-run-milestone-governed-work.test.ts | 16 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/__tests__/server-startup-feedback-export.test.ts | 61 |
+| src/services/native-runtime/native-finalization-reconciler-timing.test.ts | 2 |
+
+Five distinct fresh PostgreSQL 17 databases were created and migrated before
+the corpus, recovery, finalizer, external-chat, and governed-milestone fixtures.
+These external URLs use the supported test paths and avoid a new embedded
+cluster while this host is near its semaphore limit; no selected suite is skipped.
+Database build, server typecheck/build, module boundaries, target migration
+order, and all five fresh parent-0407 migrations pass. The earlier circular
+notification-payload failure remains recorded above; no passing run erases it.
+
+This verifies the combined cleanup owner, actual producer/transaction cases,
+status authority and affected consumers. It does not establish deployed sleep
+or Cloud alarms. Actual landed parent ancestry and fresh published-head review
+and CI remain required.

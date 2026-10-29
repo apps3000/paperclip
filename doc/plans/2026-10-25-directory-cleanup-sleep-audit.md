@@ -134,3 +134,53 @@ Filesystem suites use fresh databases per full invocation: their teardown remove
 temporary roots, so reused retained rows would refer to deleted fixture paths.
 The baseline and failure logs are retained under `/tmp/sleep41-*` locally; the PR
 records the outcomes for reviewers without requiring access to those files.
+
+
+## Updated parent and current acceptance (2026-10-28)
+
+The existing duty was merged normally with the verified instruction-commit
+parent. Only its unpublished 0399 migration artifacts were deferred while
+adopting parent history, then regenerated through `pnpm db:generate` as
+`0405_petite_frightful_four.sql`. The concurrent, idempotent index SQL is
+byte-identical to the original. Every prior SQL and journal entry and every
+retained parent snapshot is unchanged; the five newest snapshots are 0401-0405.
+The only snapshot merge conflict was resolved with the exact parent bytes.
+Owned domain/schema edits and unrelated upstream blobs are preserved.
+
+Current source `7184877830e2b4f56d61fe7eb6b8c3d92e1353e6` passes **284 cases across six complete files**,
+with no skips. The verbose case records give these counts:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/__tests__/agent-directory-working-copies.test.ts | 101 |
+| src/services/heartbeat/run-lifecycle.test.ts | 31 |
+| src/__tests__/agent-instruction-working-copies.test.ts | 38 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/__tests__/server-startup-feedback-export.test.ts | 55 |
+| src/services/heartbeat/instruction-working-copy.test.ts | 14 |
+
+Instruction copies, directory copies, and heartbeat recovery each use a distinct
+new disposable PostgreSQL database migrated before the fixtures. Lifecycle
+fixtures retain real embedded PostgreSQL. Database build, production server
+typecheck/build, module boundaries, target migration order, and all three fresh
+0405 migrations pass. The older failed fixtures and timing findings above remain
+part of the record; no passing retry is used to erase them.
+
+A populated 0404 parent database upgraded to 0405: all 403 existing migration
+receipts remained identical and exactly one was appended. Replay added none.
+The cleanup index is valid and ready on both fresh and upgraded databases.
+This verifies safe migration and worker behavior, not deployed sleep or Cloud
+alarm delivery. Final publication still requires the actual landed parent
+ancestry and fresh current-head review and CI.
+
+
+## Published parent review cleanup
+
+The published captured-save parent is now `a1a0ae5b02e8a650408bf4c55ae99071c3bff59c`.
+Adopting it through a normal merge carries its actual-parent audit and removes
+seven parent-owned code-comment lines under CONTRIBUTING.md. Every changed code
+file retains its exact non-comment TypeScript token stream; the entire database
+source tree is unchanged. This slice adds no code comments relative to that
+parent. The 284-case acceptance and 0405 upgrade evidence retain their original
+scope, with no runtime or assertion change hidden as a parent update. Actual
+landed 0404 ancestry and fresh published-head gates remain required.
