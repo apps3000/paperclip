@@ -257,3 +257,20 @@ tree. It also records the actual 0406 squash ancestry. The parent directory PR
 still must merge, then its actual 0407 squash ancestry must be reconciled before
 this slice publishes. Old draft review scores and local acceptance do not prove
 current-head remote gates or deployed sleep. All earlier failures stay recorded.
+
+
+## Landed directory parent and independent UI preservation
+
+Directory cleanup landed as `267842fc3c6e6542deed8a1bcc2c78bec8df7862`.
+Its server, package and test trees match reviewed parent `210fcb1215a3b5e5ed84e420ddb73ab5952d9365`.
+Master also contains the independent sidebar popover fix from #18117 in three UI
+paths. A normal merge uses the proven combination of both complete patches.
+It preserves every owned stopped-collection edit and every upstream UI blob.
+The resulting server, package and test trees remain identical to the accepted
+1469-case source. The whole 0408 database tree remains unchanged.
+
+Integration `c3a2ad6bdf` records the actual landed-parent ancestry. All 36 tests
+in the complete sidebar account-menu file pass on the combined tree in 2.02
+seconds. Existing React act warnings are present. No timing limits, backend
+assertions or runtime behavior changed for this ancestry reconciliation. Fresh
+CI and exact-current-head reviews must still pass before merge.
