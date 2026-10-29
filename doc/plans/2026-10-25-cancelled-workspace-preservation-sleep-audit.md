@@ -246,3 +246,15 @@ The actual landed-parent ancestry must be reconciled and complete owned and
 unrelated upstream changes proved again before publication. Fresh current-head
 CI and reviews remain required. Earlier failures and qualifications stay recorded.
 These tests do not establish deployed host/database suspension or Cloud wakes.
+
+
+## Actual stopped-collection squash ancestry
+
+Parent #17674 merged as `82529741418e138d9d623bf13d2fa22c1ff79d36`. Its
+entire tree equals reviewed parent `d176d731f083c7edd2ede688cb901d1e66d8f1d8`,
+which is already an ancestor of the accepted child. Normal merge
+`28536423228b67541503872da6bd98b9b4c5dfef` resolves the inspected duplicate
+squash-ancestry conflicts. Its entire resulting tree equals the accepted child.
+Complete server, package, test and UI trees remain identical to the 1472-case
+source, including the whole 0409 database tree. No assertions or timing limits
+change. Fresh published-head CI and reviews remain required before merge.
