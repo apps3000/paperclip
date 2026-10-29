@@ -184,3 +184,39 @@ source tree is unchanged. This slice adds no code comments relative to that
 parent. The 284-case acceptance and 0405 upgrade evidence retain their original
 scope, with no runtime or assertion change hidden as a parent update. Actual
 landed 0404 ancestry and fresh published-head gates remain required.
+
+## Current parent migration history and corrected acceptance
+
+Current parent `a39d6fe84b582ace7b4a6d20312943d65e750d30` carries the actual
+merged webhook-recovery ancestry, the new Coordinator/Runner changes, and
+append-only migration 0406. Only this slice's unlanded 0405 artifacts were
+removed before a normal merge. Original runtime/schema edits and every unrelated
+upstream blob are preserved. The generated snapshot conflict uses exact parent
+bytes. The existing index was generated as `0407_greedy_star_brand.sql`, with
+identical original concurrent/idempotent SQL. All landed SQL files, prior journal
+entries, and retained snapshots remain unchanged. The five snapshots are
+0403 through 0407.
+
+An initial local runner mistakenly replaced its database build with a pnpm
+filter that matched no projects. Its zero exit was not a build pass. The first
+fresh migration then failed because compiled migration assets were absent. Both
+logs and the original command receipt remain. No owner tests ran in that failed
+attempt. Commands now select the actual database build and current migration
+order by name rather than position.
+
+At `e7753d731810ad342468213129ddab4345fb1e4c`, the corrected run passes all
+**284 cases in six complete files**, with no skips, in 50.01 seconds. Four unused
+PostgreSQL 17 databases migrated through 0407 isolate the destructive fixtures.
+The embedded-only lifecycle test temporarily used its own external fixture
+because this host cannot start more embedded clusters; its fixture import was
+restored byte for byte. Assertions and original timing limits are unchanged.
+This is qualified external-database acceptance. Published CI still must pass
+with the original embedded fixture. The actual database build, server types and
+build, boundaries, and exact current migration-order check pass.
+
+A populated 0406-to0407 upgrade preserves every one of the 405 prior migration
+receipts and all 38 companies, adds exactly one receipt, and adds none on replay.
+The cleanup index is valid and ready on both fresh and upgraded databases. These
+results supersede the earlier local 0405 preparation after master's migration
+history advanced. No new published head or current-head review pass is implied;
+parent squash ancestry and new published-head gates remain required.
