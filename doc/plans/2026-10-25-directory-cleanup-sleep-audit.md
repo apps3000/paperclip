@@ -91,11 +91,12 @@ or measured cost savings.
 
 ## Index and migration
 
-Migration 0395 adds a partial `agent_instruction_copies_cleanup_idx` on the
+Migration `0407_greedy_star_brand.sql` adds a partial `agent_instruction_copies_cleanup_idx` on the
 existing table. Its predicate matches discovery and excludes final history.
 The migration uses `CREATE INDEX CONCURRENTLY IF NOT EXISTS` and the existing
 nontransactional runner, including interrupted-index repair. Schema generation
-retains snapshots 0391 through 0395 and preserves all executable migrations.
+retains snapshots 0403 through 0407 and preserves all executable migrations.
+The original draft used 0395; later regeneration history remains recorded below.
 
 A rolled-back PostgreSQL fixture with 10,000 added completed records and one
 pending record used this index: one row, three shared-buffer hits, 0.005 ms local
