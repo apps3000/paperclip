@@ -1,7 +1,8 @@
 # Cancelled native workspace preservation
 
-Date: 2026-10-25. Parent: stopped instruction collection PR #17674 at
-`6dc58115cdebb988a63bb45dce4521f5bb5013f6`.
+Date: 2026-10-25; current integration: 2026-10-29. Parent: stopped instruction
+collection PR #17674 at `d176d731f083c7edd2ede688cb901d1e66d8f1d8`.
+The original draft parent was `6dc58115cdebb988a63bb45dce4521f5bb5013f6`.
 
 ## One reason and its owner
 
@@ -106,7 +107,7 @@ startup/manual preservation entry point remains available; periodic reaping skip
 only this migrated duty. Drain/standby retain changes without passive SQL.
 Shutdown joins admitted owner transactions and removes the registration.
 
-Migration 0397 adds a partial index on (id, company_id) using the same coarse
+Current migration 0409 adds a partial index (the original draft used 0397) on (id, company_id) using the same coarse
 pending predicate. It excludes the recorded completed-preservation history.
 It is concurrent, replay-safe, registered in the existing nontransactional
 migration runner, and accompanied by the five newest generated snapshots.
@@ -159,7 +160,7 @@ the exact upstream superseded-retry test block are retained. Unrelated upstream
 blobs are preserved. A cached-diff whitespace warning belonged to an unchanged
 upstream routine-status file; the owned diff against the current parent is clean.
 
-Current source `8deb3941850e4c07744caceaccf30ad0f53abefd` passes **1472 cases across 16 complete files,
+Earlier source `8deb3941850e4c07744caceaccf30ad0f53abefd` passes **1472 cases across 16 complete files,
 with no skips**. The owner passes 84 cases, including the preserved superseded-
 retry coverage. Fifteen consumer files pass 1388 cases, including the complete
 968-case native session executor. Per-file counts follow:
@@ -203,3 +204,45 @@ and ready on both fresh and upgraded databases. These checks establish combined
 worker, ownership and migration behavior, not deployed host/database suspension
 or external wake delivery. Actual landed parent ancestry and fresh published-head
 review and CI remain required. Prior failures above retain their original scope.
+
+
+## Current stopped-collection parent and migration409 acceptance
+
+Only this slice's unlanded 0407 migration artifacts were deferred before the
+normal merge of published parent `d176d731f083c7edd2ede688cb901d1e66d8f1d8`.
+The merge has no conflicts. All original runtime and schema edits remain
+identical, and every unrelated upstream blob is preserved. This includes the
+new quality-review boundary, bounded retry cancellation, and independent
+sidebar fix. The migration directory and client matched the exact parent
+before generation. The first path preflight used rename detection and failed
+before mutation; explicit no-renames verifies the five expected artifacts.
+
+`pnpm db:generate` produced `0409_uneven_zuras.sql`. Its concurrent, replay-safe
+index SQL is byte-identical to the original. All prior SQL, journal entries and
+retained snapshot bytes remain unchanged. The newest five snapshots are 0405
+through 0409. No new code comments are added.
+
+Source `21b46a8e4293ca670235117458b984493a181759` passes all **1472 cases in
+16 complete files**, without skips: the 84-case owner in 14.93 seconds and
+1388 consumer cases in 133.46 seconds. This includes the full 968-case native
+session suite and existing Stop, restart, dispatch, workspace-sync and
+upgrade-readiness consumers. Twelve separate fresh PostgreSQL 17 databases
+migrated through 0409 isolate destructive fixtures. The embedded-only lifecycle
+fixture temporarily uses its own external database on this IPC-exhausted host
+and is restored byte for byte. Assertions and timing limits stay unchanged.
+This is qualified external-database acceptance, not an unmodified embedded CI
+run. Actual database build, server types/build, boundaries and exact-head
+migration-order checks pass.
+
+A populated 0408-to0409 upgrade preserves all 407 prior migration receipts and
+all 38 companies, appends exactly one receipt and adds none on replay. The
+preservation index is valid and ready on fresh and upgraded databases.
+
+Publication remains held until the parent actually merges. An explicit-base
+planning probe predicts squash-ancestry conflicts; it is not an actual merge
+proof. Its first sandboxed attempt could not write Git objects and was not
+valid evidence. The checked successful probe records the expected conflicts.
+The actual landed-parent ancestry must be reconciled and complete owned and
+unrelated upstream changes proved again before publication. Fresh current-head
+CI and reviews remain required. Earlier failures and qualifications stay recorded.
+These tests do not establish deployed host/database suspension or Cloud wakes.
