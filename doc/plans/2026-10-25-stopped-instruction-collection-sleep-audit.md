@@ -99,10 +99,11 @@ Startup/resume reconstructs existing debt. Shutdown joins admitted work and
 retires subscriptions and deadlines. Manual/startup recoverStopped remains
 available; only the migrated periodic caller skips it.
 
-Migration 0396 adds the concurrent, replay-safe partial collection index on
+Migration `0408_short_red_skull.sql` adds the concurrent, replay-safe partial collection index on
 (run_id, company_id). Its predicate excludes ineligible copy history; terminal
 run eligibility remains a same-company join. The migration is registered with
-the existing nontransactional runner and retains the five newest snapshots.
+the existing nontransactional runner and retains snapshots 0404 through 0408.
+The original draft used 0396; later regeneration history remains recorded below.
 Memory and startup cost scale with actual pending copy candidates, including
 active candidates filtered by the run join; this is not a constant-cost claim.
 
@@ -216,3 +217,60 @@ CONTRIBUTING.md. The staging/terminal-proof and fair-page explanations remain
 in this audit. No guard, query, assertion or deadline changes. The 1469-case
 acceptance retains its original scope; final actual-parent ancestry, current
 head CI and reviews are still required before publication and merge.
+
+## Current parent, migration408 and complete native-runtime acceptance
+
+The current directory-cleanup parent carries the new Coordinator/Runner behavior,
+bounded retry cancellation and actual landed instruction-recovery ancestry. Only
+this slice's unlanded 0406 artifacts were deferred before the normal merge. The
+two native finalization source conflicts were import-only: both the collection
+notification and required-quality-review imports remain. Complete original
+runtime/schema edits and every unrelated upstream blob are preserved. The
+migration tree and client matched the exact parent before generation.
+
+The original concurrent, idempotent index SQL was generated as
+`0408_short_red_skull.sql`. All earlier executable SQL, prior journal entries,
+and retained snapshot bytes remain unchanged. The five snapshots are
+0404 through 0408. No new code comments were added relative to the parent.
+
+Source `cb2818a8f46ef961f744977a258f0e9042e31a42` passes all **1469 cases in
+fourteen complete files**, without skips, in 141.69 seconds. This includes the
+full 968-case native-session suite and the collection, directory, startup,
+recovery, dispatch, queued-comment, execution-control, finalization and lifecycle
+consumers. Eleven separate fresh PostgreSQL 17 databases migrated through 0408
+isolate destructive fixtures. The embedded-only lifecycle fixture temporarily
+uses its own external database on this IPC-exhausted host, then is restored byte
+for byte. All assertions and original timing limits stay unchanged. This is
+qualified external-database acceptance, not an unmodified embedded CI run.
+Actual database build, server types/build, boundaries and exact-current migration
+order pass with commands selected by name.
+
+A populated 0407-to0408 upgrade preserves every one of the 406 prior migration
+receipts and all 38 companies, adds exactly one receipt, and adds none on replay.
+The collection index is valid and ready on upgraded and fresh databases.
+
+Adopting published parent `210fcb1215a3b5e5ed84e420ddb73ab5952d9365` changes
+only parent documentation and ancestry. Integration
+`a4dfd30786f30f755273c86515c17644c4f15471` preserves complete server, package,
+UI and test trees from the accepted source, including the whole 0408 database
+tree. It also records the actual 0406 squash ancestry. The parent directory PR
+still must merge, then its actual 0407 squash ancestry must be reconciled before
+this slice publishes. Old draft review scores and local acceptance do not prove
+current-head remote gates or deployed sleep. All earlier failures stay recorded.
+
+
+## Landed directory parent and independent UI preservation
+
+Directory cleanup landed as `267842fc3c6e6542deed8a1bcc2c78bec8df7862`.
+Its server, package and test trees match reviewed parent `210fcb1215a3b5e5ed84e420ddb73ab5952d9365`.
+Master also contains the independent sidebar popover fix from #18117 in three UI
+paths. A normal merge uses the proven combination of both complete patches.
+It preserves every owned stopped-collection edit and every upstream UI blob.
+The resulting server, package and test trees remain identical to the accepted
+1469-case source. The whole 0408 database tree remains unchanged.
+
+Integration `c3a2ad6bdf` records the actual landed-parent ancestry. All 36 tests
+in the complete sidebar account-menu file pass on the combined tree in 2.02
+seconds. Existing React act warnings are present. No timing limits, backend
+assertions or runtime behavior changed for this ancestry reconciliation. Fresh
+CI and exact-current-head reviews must still pass before merge.
