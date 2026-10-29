@@ -1241,7 +1241,7 @@ async function materializeDecisionEffect(input: {
       )
       .for("update");
     if (pending.length === 0) throw new Error("native_pending_effect_missing");
-    await notifyNativeFinalizationWork(input.tx, { companyId: input.companyId });
+    await notifyNativeFinalizationWork(input.tx, { companyId: input.companyId, issueId: input.issue.id });
     await input.tx
       .update(statusDecisionEffects)
       .set({
