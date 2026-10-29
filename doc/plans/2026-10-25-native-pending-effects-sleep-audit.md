@@ -267,3 +267,16 @@ to the accepted child. The whole 0411 database tree and all earlier acceptance
 scopes remain unchanged. Publication remains held until the unsafe-export
 parent lands and its actual ancestry is reconciled. Fresh current-head CI
 and review are still required.
+
+
+## Actual unsafe-export squash ancestry
+
+Unsafe-export prerequisite #17687 merged as
+`4e715eb7ea56d49a099530c3dce59e61e698077c`, reviewed at
+`b28399babac72ba9db1c4a4ef882c5e87aded38c`. Its entire squash tree equals
+the reviewed parent, which was already an ancestor of this prepared child.
+Normal merge `45a1f20c8830efb0d60794f01fd7a5013ff41198` resolves duplicate
+squash ancestry while preserving the complete held child tree byte for byte.
+All accepted source, all migrations through 0411, and all earlier validation
+scopes remain unchanged. The only following edit records this proof. Fresh
+published-head CI and exact-head Greptile 5/5 are still required.
