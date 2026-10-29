@@ -2871,6 +2871,13 @@
       "when": 1793246172969,
       "tag": "0411_real_scrambler",
       "breakpoints": true
+    },
+    {
+      "idx": 412,
+      "version": "7",
+      "when": 1793249495056,
+      "tag": "0412_tearful_squadron_supreme",
+      "breakpoints": true
     }
   ]
 }
