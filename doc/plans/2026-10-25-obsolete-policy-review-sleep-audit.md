@@ -185,3 +185,38 @@ Complete server, package, UI and test trees remain identical to the 443-case
 source. The database source remains exactly parent-identical, including all
 0409 history and retained snapshots. Fresh published-head CI and reviews remain
 required; no previous review score is used as current evidence.
+
+
+## External corpus repeatability review correction
+
+Greptile reported that rerunning the supported external corpus fixture fails
+because the prior companies retain the fixed PSC and OUT prefixes. The exact
+reviewed head `45cb0d9ccc9b0c37068f56a709f16572bd7b7ddc` reproduces PostgreSQL
+23505 on `companies_issue_prefix_idx` when rerun against its previously successful
+fixture. Setup fails and all 56 cases are skipped; this is a failing reproduction,
+not an assertion pass.
+
+An initial cleanup attempt at `669da4422df74e90eab324100ddab345f21df020`
+passes all 443 assertions but fails the suite in afterAll. Activity-log records
+hold non-cascading company foreign keys. That attempt is not accepted and no
+passing retry erases it. The cleanup and import were fully removed.
+
+The final change derives each prefix from its own already-unique company UUID,
+normalizes it to uppercase alphanumeric text, and keeps the PSC or OUT label.
+It changes exactly two fixture values relative to the reviewed head. Existing
+teardown, all assertions and timing limits, runtime code and database schema
+remain unchanged. It performs no deletion and leaves retained fixture history
+intact. The database prefix column accepts this form.
+
+Source `4cc0d03ae96bd92a4fdad44168c2a8647d42466c` passes all **443 distinct
+cases across seven complete files**, without skips, in 46.46 seconds. The complete
+56-case corpus immediately passes a second time against the same database in
+10.15 seconds. The repeat is not added again to the distinct test count. Three
+preexisting companies include retained PSC/OUT prefixes and an unrelated sentinel.
+All three remain byte-identical in the inspected ID/name/prefix fields after
+both runs. Only each invocation's two distinct companies are appended.
+
+Five new isolated PostgreSQL 17 fixtures migrate through 0409. Actual database
+build, server typecheck/build, boundaries and exact-head migration order pass.
+The complete database source stays unchanged. Fresh published-head CI and review
+remain required; the old head's 5/5 score and green checks do not establish them.
