@@ -45,8 +45,8 @@ function serializeCopySave<T>(db: Db, companyId: string, runId: string, save: ()
   let active = copySaves.get(scope);
   if (!active) copySaves.set(scope, active = new Map());
   const key = targetKey(companyId, runId);
-  // Share ownership across services and dedicated pools. A live operation
-  // retains it until completion; elapsed time cannot authorize a second save.
+
+
   const operation = (active.get(key) ?? Promise.resolve()).then(save);
   const settled = operation.then(() => undefined, () => undefined);
   active.set(key, settled);
