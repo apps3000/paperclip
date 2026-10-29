@@ -16157,8 +16157,12 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
         : mode === "missing"
           ? db.update(chatEndpoints).set({ assignedAgentId: randomUUID() }).where(eq(chatEndpoints.id, endpoint.id))
           : db.delete(agents).where(eq(agents.id, endpoint.assignedAgentId));
-      await expect(mutation).rejects.toMatchObject({ cause: { code: mode === "null" ? "23502" : "23503" } });
+      const integrityCode = mode === "null" ? "23502"
+        : mode === "deleted" ? expect.stringMatching(/^(23001|23503)$/) : "23503";
+      await expect(mutation).rejects.toMatchObject({ cause: { code: integrityCode } });
       expect((await readChatEndpointsById(endpoint.id))[0].assignedAgentId).toBe(endpoint.assignedAgentId);
+      expect(await db.select({ id: agents.id }).from(agents).where(eq(agents.id, endpoint.assignedAgentId)))
+        .toEqual([{ id: endpoint.assignedAgentId }]);
       f.requests.length = 0;
       const errors: unknown[] = [];
       const coordinator = createDeliveryWorkCoordinator({ owner: db, canRun: () => true, onError: error => errors.push(error) });

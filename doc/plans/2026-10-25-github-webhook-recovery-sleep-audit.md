@@ -306,3 +306,52 @@ or transport call changes. The 22-case current recovery acceptance and earlier
 751-case runtime evidence keep their stated revisions and scope. Fresh head CI
 and review are still required; neither an old score nor comment-only equivalence
 by itself satisfies the merge gates.
+
+
+## Current CI test corrections (2026-10-29)
+
+The cbe3fbea head failed two independent test boundaries. Neither changes the
+production scheduler, database constraints, delivery state machine or deadlines.
+
+The new deleted-agent probe expected PostgreSQL 17's 23503 foreign-key error.
+CI PostgreSQL 18 correctly reports 23001 (restrict violation) for the same
+forbidden delete. Running the original assertion against local embedded
+PostgreSQL 18 reproduced that exact failure. The assertion now accepts only
+those two integrity codes for deletion; NULL still requires 23502 and a missing
+UUID still requires 23503. It also checks that the original agent row and
+assignment both remain before testing healthy deadline-driven recovery. All
+22 recovery-scheduling cases pass on embedded PostgreSQL 18. The three integrity
+probes also pass against a fresh PostgreSQL 17 database. They are the same three
+cases across two engines, not six distinct cases. The invalid-orphan premise
+remains ruled out by validated nondeferrable constraints, not by changing SQL.
+
+The attachment E2E failed waiting for a file chooser. Its screenshot and trace
+showed an announcement appearing while the attachment menu was open. The global
+locator handler tried to dismiss the announcement outside that modal menu, so
+its own click could not complete and the original menu-item click could not run.
+The unchanged failing journey passed naturally once locally; that pass did not
+explain or erase the CI failure. A controlled delayed real announcement response
+released after the menu opened reproduced the same 60-second filechooser and
+intercepted-click failures. The handler now closes the menu through Escape,
+dismisses the announcement through its visible button, and reopens the menu
+so the original upload action can continue. The same first late-announcement
+condition passes with this repair. The temporary fault is one-shot after that
+first injection so a dismissed card is not incorrectly awaited for the second
+attachment; the failing predecessor never reached a second injection.
+
+The temporary delay/route fault was removed before final acceptance. All **11
+complete attachment receipt journeys pass**, retries zero, in 38.7 seconds.
+Every journey body, receipt/content assertion, 60-second test budget and
+120-second startup budget is unchanged. The full run uses a fresh database on
+the existing local PostgreSQL 17 test server and the canonical throwaway
+Paperclip home, CLI onboarding, server, UI, storage and HTTP paths. An earlier
+full-run attempt failed during embedded PostgreSQL initialization before any
+browser test started; host semaphore usage was near capacity. That startup
+failure is retained and is not counted as a test pass. No shared host resources
+were deleted or unrelated databases stopped. PostgreSQL 18 coverage is provided
+separately by the recovery suite and remains required in fresh CI.
+
+Server typecheck passes. Production source and schema are unchanged from cbe3fbea;
+only the two test files and this audit change. The prior 751-case runtime scope
+remains exactly as recorded. Fresh current-head CI and reviews remain required
+before merge; no previous failing result is erased by these passes.
