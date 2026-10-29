@@ -1,7 +1,7 @@
 # Native pending status-effect recovery
 
 Branch: `codex/sleep-47-native-pending-effects`.
-Current prepared parent: #17687, `2c6721445d2ec846c74bae1703be4ba02c47972b`.
+Current published parent: #17687, `b28399babac72ba9db1c4a4ef882c5e87aded38c`.
 Original draft parent: `b9fe9e2e40ab48104cf18822b5302a740d1957a7`.
 Status: implemented and locally verified; remote PR acceptance remains required.
 
@@ -250,3 +250,14 @@ chat file are outside this focused selection. The full parent 274-case workflow
 is not claimed as executed here. The parent audit preserves the original CI
 failure and controlled comparison, including its limit on exact CI causality.
 Actual prerequisite ancestry and fresh published-head CI/reviews remain required.
+
+
+## Published unsafe-export parent
+
+Normal merge `01ff4da4457bf2afc3d2e5e65fa33c16d56a4e6f` adopts published prerequisite
+`b28399babac72ba9db1c4a4ef882c5e87aded38c`, including the actual automatic-review
+squash ancestry. Complete server, package, UI and test trees remain identical
+to the accepted child. The whole 0411 database tree and all earlier acceptance
+scopes remain unchanged. Publication remains held until the unsafe-export
+parent lands and its actual ancestry is reconciled. Fresh current-head CI
+and review are still required.
