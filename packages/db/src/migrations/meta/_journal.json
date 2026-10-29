@@ -2794,13 +2794,6 @@
       "when": 1793060791744,
       "tag": "0400_late_cerise",
       "breakpoints": true
-    },
-    {
-      "idx": 401,
-      "version": "7",
-      "when": 1793060791745,
-      "tag": "0401_lumpy_talos",
-      "breakpoints": true
     }
   ]
 }

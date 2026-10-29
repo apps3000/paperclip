@@ -519,7 +519,6 @@ const MIGRATIONS_WITH_TOP_LEVEL_STATEMENTS = new Set([
   "0398_breezy_mongu.sql",
   "0399_colorful_darkstar.sql",
   "0400_late_cerise.sql",
-  "0401_lumpy_talos.sql",
   "0384_funny_adam_warlock.sql",
   "0383_tool_review_company_expiry.sql",
 ]);
