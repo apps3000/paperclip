@@ -99,6 +99,8 @@ test("Secrets shows masked inline variables and preserves them when another vari
   await expect(page.getByLabel("Variable value", { exact: true })).toHaveValue("***REDACTED***");
   await expect(page.getByText("Release credential", { exact: true }).first()).toBeVisible();
   expect(await page.locator("body").textContent()).not.toContain("disposable-inline-credential");
+  const before = await json(await request.get(`/api/agents/${agent.id}/configuration`));
+  expect(before.configurationRevision).toMatch(/^[a-f0-9]{64}$/);
 
   await page.getByRole("button", { name: "Add variable", exact: true }).click();
   await page.getByRole("textbox", { name: "Variable name", exact: true }).last().fill("RELEASE_CHANNEL");
@@ -114,6 +116,13 @@ test("Secrets shows masked inline variables and preserves them when another vari
   await page.reload();
   await expect.poll(variableNames).toEqual(["RELEASE_CHANNEL", "RELEASE_WEBHOOK", "SHARED_TOKEN"]);
   await expect(page.getByLabel("Variable value", { exact: true }).first()).toHaveValue("***REDACTED***");
+  await page.getByRole("button", { name: "Remove RELEASE_CHANNEL", exact: true }).click();
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Save changes", exact: true })).toBeDisabled();
+  const after = await json(await request.get(`/api/agents/${agent.id}/configuration`));
+  // The server's opaque revision includes the actual hidden values. Returning
+  // to the same revision proves they survived both saves without reading them.
+  expect(after.configurationRevision).toBe(before.configurationRevision);
 });
 
 test("Advanced YAML persists settings and commands through their real resource APIs", async ({ page, request, toolProvider }, info) => {
