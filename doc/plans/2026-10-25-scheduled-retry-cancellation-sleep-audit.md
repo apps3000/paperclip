@@ -76,11 +76,13 @@ Shutdown joins active reads and does not start a cancellation after admission cl
 
 ## Migration
 
-`0398_breezy_mongu.sql` creates a partial ID index for scheduled retries with an
+`0406_zippy_war_machine.sql` creates a partial ID index for scheduled retries with an
 object cancellation fence. It uses concurrent, idempotent creation and is listed
 in the client's top-level migration set. It changes no rows or API contracts.
 The migration was generated through `pnpm db:generate`. Journal entries and SQL
-history remain intact; snapshots 0390 through 0394 are the retained newest five.
+history remain intact; snapshots 0402 through 0406 are the retained newest five.
+The initial unlanded draft used `0398_breezy_mongu.sql`; the later integration
+sections retain its history and explain append-only regeneration.
 Migration application, explicit replay, and migration validation passed.
 
 A rolled-back synthetic fixture with 10,000 completed rows and one candidate
@@ -277,3 +279,69 @@ error were rejected and corrected before acceptance; neither was a product pass.
 The previously green `9388f8c020d6f73d681cb1d183193f79754b324c` review and CI
 are historical. The new published head requires fresh CI and exact-head Greptile
 5/5. These results do not establish deployed host or database suspension.
+
+## Bounded reconstruction and durable browser recovery acceptance
+
+Current-head CI at `48b3fcb83f305616df02a4337a42ec0867bb4b80` failed the same
+legacy `task_retry` reload assertion previously seen on the parent: an expected
+reply was absent within the unchanged five-second reload check. The other five
+legacy recovery journeys passed. The earlier parent retry had passed without
+explaining the failure. This repeated failure was not retried blindly.
+
+The browser test checked a visible reply, task status Done, and one new run, but
+none establishes that the canonical reply was saved. The fixture marks the task
+Done before emitting its reply and returning its final result. Completion later
+materializes the agent comment. A controlled temporary twelve-second delay
+between the fixture's existing visible reply and final result reproduced the
+same five-second missing-reply assertion. A fixture-directory cleanup race then
+masked that assertion in the top-level failure; the retained Playwright trace
+records the original reload assertion, and the cleanup failure remains recorded.
+CI did not capture a database snapshot at reload, so this reproduction identifies
+a sufficient precondition race rather than claiming direct observation of the
+exact CI interleaving or production data loss.
+
+The test now requires exactly one saved comment from the resumed run and agent
+before reload. It retains the original task, readiness, and reload limits and all
+previous assertions. The same controlled delay then passes. Both the fixture
+delay and temporary database-URI setup were removed/restored afterward. The
+permanent fixture file is unchanged. All six journeys also pass without the
+injected delay. No application polling or production timeout changed.
+
+Ponytail's current-head review found that reconstruction read the entire backlog
+before any cancellation. Two real-PostgreSQL regressions failed on the old worker:
+manual recovery read a second page before its first cancellation, and scoped
+startup had already processed twenty items beyond the first malformed page.
+The worker now loads at most one hundred raw candidates per scope per scheduler
+pass. It retains a scope cursor through the existing helper's incomplete-load
+contract. The shared scheduler continues only while that real reconstruction
+obligation remains. Manual recovery streams pages and begins cancellation before
+reading the full backlog, retaining its twenty-item execution limit and the
+ability to pass malformed records. No independent timer or table was added.
+
+The regressions pass. The scoped case also commits a new valid intent behind the
+active cursor, preserves fair twenty-item batches across two companies, settles
+all twenty-nine valid obligations, and performs no SQL across the later former
+poll periods. The worker keeps per-candidate admission reads: a settings change
+or shutdown can occur during asynchronous batch work. The existing disabled/
+re-enabled and in-flight authority-read shutdown cases still pass. The optional
+suggestion to cache that authority for a whole batch was not applied. The original
+Migration paragraph now names the current 0406 artifacts, while retaining the
+initial draft filename as history.
+
+Source `a35fa43b98e2bd378d4a920d2775ce243654838b` passes all **363 backend cases
+in ten complete files**, with no skips, in 64.00 seconds. Seven separate fresh
+PostgreSQL 17 databases migrated through 0406 isolate the fixtures. The temporary
+external setup for the two embedded-only fixtures follows the qualification above;
+both files were restored byte for byte. Actual database build, server typecheck/
+build, module boundaries, and exact-current migration order pass. The entire
+database source tree is identical to the previously verified populated-upgrade
+revision, so its 0405-to0406 upgrade and replay evidence remains applicable.
+
+The final six-browser-journey run on this source passes in 40.5 seconds, with
+zero retries, the original 120-second case limit, and the original five-second
+reload assertion. It uses the canonical CLI/server/static-UI path and a fresh
+external PostgreSQL database. Only the fixture database URI was temporarily
+adapted; this is not an unmodified embedded CI-environment reproduction. The
+controlled red and green are one of those six journeys, not additional distinct
+cases. The two focused paging cases are included in the 363, not added again.
+Fresh review and CI on the new published head still must pass before merge.
