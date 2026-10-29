@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   agents,
   agentWakeupRequests,
@@ -387,8 +387,8 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
     const external = resolveExternalTestDatabaseUrl("PAPERCLIP_STATUS_CORPUS_TEST_DATABASE_URL");
     if (!external) temporary = await startEmbeddedPostgresTestDatabase("paperclip-status-corpus-");
     db = createDb(external ?? temporary!.connectionString);
-    await db.insert(companies).values({ id: companyId, name: "Status corpus", issuePrefix: "PSC" });
-    await db.insert(companies).values({ id: outsideCompanyId, name: "Outside corpus", issuePrefix: "OUT" });
+    await db.insert(companies).values({ id: companyId, name: "Status corpus", issuePrefix: `PSC${companyId.replaceAll("-", "").toUpperCase()}` });
+    await db.insert(companies).values({ id: outsideCompanyId, name: "Outside corpus", issuePrefix: `OUT${outsideCompanyId.replaceAll("-", "").toUpperCase()}` });
     await db.insert(agents).values([
       {
         id: agentId,
@@ -415,14 +415,7 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
     ]);
   }, 30_000);
 
-  afterAll(async () => {
-    try {
-      if (db) await db.delete(companies).where(inArray(companies.id, [companyId, outsideCompanyId]));
-    } finally {
-      await db?.$client.end({ timeout: 1 });
-      await temporary?.cleanup();
-    }
-  });
+  afterAll(async () => { await db?.$client.end({ timeout: 1 }); await temporary?.cleanup(); });
 
   async function seedFixture(fixture: Fixture) {
     const issueId = randomUUID();
