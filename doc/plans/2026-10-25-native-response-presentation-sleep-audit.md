@@ -482,3 +482,17 @@ source. Publication remains held until #17690 lands and its actual squash
 ancestry is reconciled. Fresh published-head CI and exact-head Greptile 5/5
 remain required. These checks do not establish deployed suspension, external
 Cloud alarm delivery or fleet savings.
+
+
+## Actual native-effect prerequisite ancestry
+
+Native-effect prerequisite #17690 merged as
+`a8a038e659c50c1c5e3ce532d13072a29a5cf951`, reviewed at
+`5bb5ddacd3d1e6817de4825b283c6e92f85bd124`. Its entire squash tree equals
+the reviewed parent already adopted by this child. The normal ancestry merge
+automatically restored the removed pending-effect notification module. The
+whole-tree identity check rejected that composition; its deletion was restored
+before publication. All accepted source, including the complete 0412 database
+tree and all 29 test files, remains byte-identical. The following edit records
+the ancestry proof. The 4171-case acceptance keeps its original source scope;
+fresh published-head CI and exact-head Greptile 5/5 are required.
