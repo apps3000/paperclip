@@ -172,3 +172,15 @@ The cleanup index is valid and ready on both fresh and upgraded databases.
 This verifies safe migration and worker behavior, not deployed sleep or Cloud
 alarm delivery. Final publication still requires the actual landed parent
 ancestry and fresh current-head review and CI.
+
+
+## Published parent review cleanup
+
+The published captured-save parent is now `a1a0ae5b02e8a650408bf4c55ae99071c3bff59c`.
+Adopting it through a normal merge carries its actual-parent audit and removes
+seven parent-owned code-comment lines under CONTRIBUTING.md. Every changed code
+file retains its exact non-comment TypeScript token stream; the entire database
+source tree is unchanged. This slice adds no code comments relative to that
+parent. The 284-case acceptance and 0405 upgrade evidence retain their original
+scope, with no runtime or assertion change hidden as a parent update. Actual
+landed 0404 ancestry and fresh published-head gates remain required.
