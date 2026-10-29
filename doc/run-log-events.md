@@ -644,3 +644,9 @@ The ordinary authenticated Runner event is the durable activation record.
 Normal source-event acknowledgement and replay deduplicate delivery. Existing
 run-read authorization and secret redaction apply to saved and live events.
 The event records use of a plugin view. It does not grant access to that view.
+
+Runner accepts local activation notifications only with an opaque context
+captured before the operation. Warm run attachment and process recovery rotate
+that authority. Runner supplies the run identity from its active authenticated
+binding. Optional hint failure does not fail the underlying operation. No output
+text is scanned and no synthetic receipt is written.

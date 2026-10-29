@@ -137,3 +137,11 @@ production adapter.
 exclude C0 controls and DEL. Run identity stays in the authenticated event
 envelope and is not accepted in this payload. These UI hints use the ordinary
 durable outbox, acknowledgement and replay contract. They add no authorization.
+
+Local clients capture an opaque context with `paperclip-runnerd notification-context`
+before an operation and invoke `notify-task-panel CONTEXT PLUGIN_KEY SLOT_ID`
+after success. Runner publishes its matching absolute executable as host-owned
+`PAPERCLIP_RUNTIME_NOTIFICATION_HELPER` and the stable endpoint descriptor path
+as `PAPERCLIP_RUNTIME_NOTIFICATION_CONTEXT`. Configured task environment cannot
+override either value. Context is invalidated on warm attachment and process
+recovery, so a caller cannot attribute a later completion to a different run.
