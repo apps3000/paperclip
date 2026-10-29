@@ -167,3 +167,14 @@ This proves current worker and affected consumer behavior, not deployed
 host/database suspension or Cloud alarms. Publication stays held until the
 actual prerequisite merge and squash ancestry reconciliation. Fresh current-head
 CI and reviews remain required before merge.
+
+
+## Published obsolete-review parent and actual preservation ancestry
+
+Normal merge `c0f3ada4c018943982731635c26d37c7bb4b9ad9` adopts published parent
+`45cb0d9ccc9b0c37068f56a709f16572bd7b7ddc`. It carries the actual cancelled-preservation
+squash ancestry and parent audit only. Complete server, package, UI and test
+trees remain identical to accepted source `27378007cd64c308f41940097a999d51201b8ba8`,
+including the whole 0409 database tree. The 462-case acceptance retains its
+original scope. Publication remains held until the actual obsolete-review merge
+and ancestry reconciliation. Fresh current-head CI and review remain required.
