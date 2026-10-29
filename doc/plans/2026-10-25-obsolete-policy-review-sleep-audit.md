@@ -172,3 +172,16 @@ Complete server, package, test and UI trees remain identical to the accepted
 443-case source. The actual cancelled-preservation parent still must land.
 Publication is held until its squash ancestry is reconciled. Fresh published-head
 CI and reviews remain required.
+
+
+## Actual cancelled-preservation squash ancestry
+
+Parent #17677 landed as `51c3f8924cb0bd5fe7cbda15ad9b8f06a6a11055`. Its
+entire tree equals reviewed parent `b34f0589847f33754ecde9413fd36bf007353d2c`,
+which is already an ancestor of this child. Normal merge
+`3c36e163ae918833b15457a4da5f969b49fb2ded` resolves inspected duplicate
+squash-ancestry conflicts. Its whole resulting tree equals the accepted child.
+Complete server, package, UI and test trees remain identical to the 443-case
+source. The database source remains exactly parent-identical, including all
+0409 history and retained snapshots. Fresh published-head CI and reviews remain
+required; no previous review score is used as current evidence.
