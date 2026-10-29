@@ -1,7 +1,7 @@
 # Historical unsafe workspace export recovery
 
 Current integration: 2026-10-29. Prepared parent: automatic completion-review
-retirement #17680 at `e58e310527e893cab2a743304e72ca0adc6831fa`.
+retirement #17680 at `e47a84ea044cc58b0b71d71e05ec877ae20f76af`.
 Earlier draft parent: `be668fb975f119efeb4830405d4bb1ab65791f87`.
 Startup registers the worker when maintenance is enabled. The periodic reaper
 skips this duty. Explicit/manual recovery remains available. Fresh published-head
@@ -290,3 +290,28 @@ only parent documentation and ancestry change. Complete server, package, UI
 and test trees remain identical to the accepted 2188-case source, including
 the whole 0410 database tree. Publication remains held for the actual
 automatic-review merge and fresh published-head CI and reviews.
+
+
+## Inherited corpus repeatability fix and source-preserving acceptance
+
+Normal integration `8f43c9f81fac23b50997e7f0e1d0d9cf383a8109` carries the
+verified prefix correction through the updated automatic-review parent. The
+only changed source file relative to the accepted child is the status-authority
+corpus: its two fixed prefix values now use their own company UUIDs. All
+production source, all packages including the complete 0410 database tree, and
+all 24 files in the accepted 2188-case selection remain byte-identical to their
+accepted source. No assertion, timing limit or teardown changes. The prior
+2188-case evidence retains that precise source scope.
+
+The additional complete 72-case status-authority corpus passes at this source
+in 14.00 seconds, then passes again on the same fresh 0410 database in 13.08
+seconds. Three retained PSC/OUT/sentinel company rows remain unchanged in the
+inspected ID/name/prefix fields after both runs; each invocation appends two
+distinct UUID-derived prefixes. Database build and exact-head migration order
+pass. This adds one independently checked file to the previous selection; the
+repeat is not counted again as distinct coverage. Previous collision and
+rejected-deletion failures remain recorded in the parent audit.
+
+The actual automatic-review prerequisite still must merge before publication.
+Fresh published-head CI and review are required, with existing sleep and
+external-wake limitations unchanged.
