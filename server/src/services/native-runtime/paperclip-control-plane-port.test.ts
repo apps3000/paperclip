@@ -397,6 +397,41 @@ describe("PaperclipControlPlanePort conformance", () => {
       terminal: CONTROL_PLANE_CONFORMANCE_TERMINAL })).resolves.toBeUndefined();
   });
 
+  it("persists panel activation under the authenticated run and recovers it across source replay", async () => {
+    const identity = { ...CONTROL_PLANE_CONFORMANCE_OPEN.identity, runId: randomUUID(), sessionId: randomUUID() };
+    const runnerId = randomUUID();
+    await db.insert(heartbeatRuns).values({
+      id: identity.runId, companyId: identity.companyId, agentId: identity.agentId,
+      status: "running", runtimeMode: "native", nativeIssueId: identity.issueId,
+      nativeSessionId: identity.sessionId, runnerInstanceId: runnerId,
+      completionContractId: contractId, completionContractSha256: contractSha,
+      contextSnapshot: { issueId: identity.issueId },
+    });
+    const binding = { ...identity, completionContractId: contractId, completionContractSha256: contractSha,
+      sourceInstanceId: runnerId, controlPlaneSourceInstanceId: `panel-${identity.runId}` };
+    const event: PrpEvent = {
+      schema: "paperclip.prp.event.v1", sourceEventId: `${runnerId}:1`, sourceSeq: 1,
+      sourceInstanceId: runnerId, sourceKind: "runner", runId: identity.runId,
+      normalizedSessionId: identity.sessionId, eventType: "task.panel.activated", schemaVersion: 1,
+      priority: 1, emittedAt: new Date().toISOString(),
+      payload: { pluginKey: "example.live-view", slotId: "screen" },
+    };
+    const port = new PaperclipControlPlanePort(db, binding);
+    const replayBinding = structuredClone(binding);
+    binding.runId = randomUUID();
+    await port.openRun({ identity, backendKind: "mock", sourceInstanceId: runnerId });
+    const notifications: string[] = [];
+    const unsubscribe = subscribeCompanyLiveEvents(identity.companyId, event => {
+      if (event.type === "heartbeat.run.event" && event.payload.runId === identity.runId) notifications.push(String(event.payload.eventType));
+    });
+    try { await port.appendEvent(event); } finally { unsubscribe(); }
+    expect(notifications).toEqual(["task.panel.activated"]);
+    const restarted = new PaperclipControlPlanePort(db, replayBinding);
+    expect((await restarted.appendEvent(event)).disposition).toBe("duplicate");
+    const activations = await db.select().from(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, identity.runId));
+    expect(activations.filter(row => row.eventType === "task.panel.activated")).toHaveLength(1);
+  });
+
   it("omits API credentials from persisted tool events and checkpoints without changing wire results", async () => {
     const identity = { ...CONTROL_PLANE_CONFORMANCE_OPEN.identity, runId: randomUUID(), sessionId: randomUUID() };
     const runnerId = randomUUID();

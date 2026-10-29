@@ -131,3 +131,9 @@ The files in `fixtures/local-runner/scripts/` drive the package-local fake
 harness. They cover successful, failed, interrupted, interactive, duplicate
 terminal, process-cleanup, and oversized-frame behavior without starting a
 production adapter.
+
+`task.panel.activated` is a P1 Runner event in v1, v2 and v3 with exactly
+`{ pluginKey, slotId }`. Identifiers contain 1–160 Unicode code points and
+exclude C0 controls and DEL. Run identity stays in the authenticated event
+envelope and is not accepted in this payload. These UI hints use the ordinary
+durable outbox, acknowledgement and replay contract. They add no authorization.
