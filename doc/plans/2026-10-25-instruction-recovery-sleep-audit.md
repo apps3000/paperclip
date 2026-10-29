@@ -302,3 +302,24 @@ Prior head `a1a0ae5b02e8a650408bf4c55ae99071c3bff59c` had passing CI, Greptile
 published. Keep the old runner interruption and all earlier failures in the
 ledger. The current parent must merge first, and the new published head needs
 fresh exact-head reviews and CI. These results do not establish deployed sleep.
+
+### Local validation command correction before publication
+
+A cloned local runner selected its first command by position, but this slice's
+first command was the database build rather than migration order. It replaced
+the build with a pnpm filter that matched no projects and exited zero. That was
+not evidence of a database build. The migration-order command also retained old
+revision arguments. The next unpublished slice exposed the error when its first
+fresh migration could not find compiled migration assets. Publication stopped.
+The original command receipts and logs remain; no product pass is inferred from
+the no-match command or the failed migration.
+
+The runner now selects commands by their names. It executed the actual database
+build and migration check against the exact current parent and head. The full
+six-file acceptance then ran again at audit-only descendant
+`b25636e6261f98f1e53ff28a1f259ea03b9c41a8`: **268 cases pass without skips in
+40.97 seconds**, using four new disposable databases migrated through 0406.
+Types, server build, boundaries, and the actual current migration-order check
+also pass. The lifecycle fixture qualification above still applies; the file was
+restored exactly. The already-published parent used a different, correct command
+layout and was not affected by this runner error.
