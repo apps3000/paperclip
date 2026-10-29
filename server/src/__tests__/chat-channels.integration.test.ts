@@ -16150,8 +16150,8 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       const f = await githubPreIngressRecoveryFixture();
       const [endpoint] = await readChatEndpointsById(f.endpoint.id);
       await f.makeScanDue();
-      // Exercise the actual database boundary without disabling constraints or
-      // inventing a row that supported writers cannot commit.
+
+
       const mutation = mode === "null"
         ? db.execute(sql`update ${chatEndpoints} set assigned_agent_id = null where ${chatEndpoints.id} = ${endpoint.id}`)
         : mode === "missing"

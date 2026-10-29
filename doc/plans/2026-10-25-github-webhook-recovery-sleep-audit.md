@@ -292,3 +292,17 @@ tree identical to the previously validated branch, so already-landed parent
 changes no longer inflate this PR's diff. Fresh current-head CI and review
 must evaluate the constraint evidence before this slice can merge; an old
 conditional verdict or neutral check is not treated as a pass.
+
+
+## Repository comment rule follow-up
+
+Apply CONTRIBUTING.md's prohibition on new code comments consistently to this
+slice too. Seven newly added comment lines are removed: two in the constraint
+regression and five explaining GitHub pagination guards. The database-constraint
+evidence above and pagination/partial-window rationale in this audit remain the
+durable explanation. TypeScript parsing proves both affected files retain the
+exact non-comment token stream; no recovery predicate, guard, assertion, deadline
+or transport call changes. The 22-case current recovery acceptance and earlier
+751-case runtime evidence keep their stated revisions and scope. Fresh head CI
+and review are still required; neither an old score nor comment-only equivalence
+by itself satisfies the merge gates.
