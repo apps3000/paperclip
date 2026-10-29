@@ -212,3 +212,31 @@ accepted child tree. Complete server, package, UI and test trees remain
 identical to the 462-case source and same-database 72-case repeat. The complete
 0409 database source remains exactly parent-identical. Fresh published-head
 CI and reviews remain required.
+
+
+## Current-head chat CI correction
+
+The published 40f head fails the initial passive native-presentation idle
+observation in chat shard 1. The owner audit records the original failure,
+unchanged local baseline, controlled red/green comparison and its limits:
+[Native presentation startup observation](2026-10-25-github-terminal-response-sleep-audit.md#ci-native-presentation-startup-observation).
+The permanent correction changes one observation from the default one-second
+window to the existing five-second settlement bound. Production code and
+business/worker deadlines do not change. All quietness, rollback and committed
+settlement assertions remain. With the probe removed, all 274 selected GitHub
+agent-review cases pass in 232.06 seconds. The earlier 462-case selection and
+72-case repeat retain identical production and selected test sources. Fresh
+CI and review are required on the updated published head.
+
+
+## Independent master cleanup assertion preserved
+
+Master advanced from the actual obsolete-review squash to
+`49fe8b87a49aa5a8985a08dd3d5ce57bdd24756c`. The sole change is an assertion
+that company cleanup removes company skills. Normal merge
+`4dbec260d36cae02bd73281bbdaac406ee989010` preserves both complete binary
+patches: this PR's full fix and the independent upstream assertion. All production
+source and the accepted GitHub integration file remain unchanged. The complete
+cleanup-removal service suite passes all six cases in 8.16 seconds on a fresh
+0409 PostgreSQL 17 fixture. The whole database source is unchanged. Current-base
+migration order and fresh published-head CI/reviews remain required.
