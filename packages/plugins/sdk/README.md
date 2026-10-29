@@ -262,16 +262,7 @@ An additional tab on a project, issue, agent, goal, or run detail page. Rendered
 Agent detail tabs can also appear in task side panels. Add
 `taskSidePanel: { availabilityPath: "/agents/:entityId/view/availability" }` to the
 slot and declare that exact path as a board-only GET API route with
-`companyResolution: { from: "agent", param: "entityId" }`. The route returns
-`{ available: true }` only while its view is in use. The host replaces `:entityId`
-with the task's running agent ID, polls availability and mounts the same component
-with agent context. The plugin owns availability, labels, content and controls.
-No private plugin identifier or provider protocol belongs in Core. Unavailable
-views, access failures, inactive runs and missing plugins contribute no task tab.
-Closing a tab preserves dismissal during polling; available panels remain in the
-launcher. Only tab identity is persisted, never availability responses or secrets.
-
-#### Structured task-panel activation publishing
+`companyResolution: { from: "agent", param: "entityId" }`.
 
 A runtime client captures Runner's opaque activation context before an eligible
 operation, then sends a structured notification after successful use:
@@ -314,7 +305,25 @@ optional hint as best effort; missing/older runners must not fail the operation.
 Do not notify for help, schema discovery, status probes or failures. No agent
 instruction is required. Identifiers are 1–160 Unicode code points, excluding
 C0 controls and DEL, consistently with all PRP schemas. This is a UI hint; plugin discovery, authorization and
-availability checks still apply. The separate Core consumer must authorize history reads and panel readiness.
+availability checks still apply. Only installed agent task-panel slots can be
+restored from history, and only ready contributions can render.
+
+The host reads durable activations on mount and reconnect. For activated views it
+replaces `:entityId` with the running agent ID, adds `runId` and `issueId` query
+parameters, and checks for `{ available: true }`. It makes at most three readiness
+attempts per activation/recovery, then stops. There is no periodic panel readiness
+poll. Transient live-run/history failures also get at most three attempts per
+read/recovery; authorization failures are not retried. A first use that happened before the task page opened is restored from the
+saved run event. A later run must produce its own activation, even when a provider
+process or an agent's view stays warm. Only the matching task and running agent
+can contribute a panel. Notifications are deduplicated per panel and run, and
+durable PRP source replay uses the existing event acknowledgement contract.
+
+The plugin owns availability, labels, content and controls. No private plugin
+identifier or provider protocol belongs in Core. Missing/disabled plugins, failed
+history reads, unavailable views and access failures add no task tab. Dismissal
+still applies for the current run. Only tab identity is stored in browser state;
+activation receipts remain in the authorized instance run log.
 
 #### `taskDetailView`
 

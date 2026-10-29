@@ -1,3 +1,5 @@
+import { plugins } from "@paperclipai/db";
+import { readTaskPanelActivations } from "../plugin-task-panels.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { asc, eq, sql } from "drizzle-orm";
 import { generateKeyPairSync, randomUUID } from "node:crypto";
@@ -398,6 +400,8 @@ describe("PaperclipControlPlanePort conformance", () => {
   });
 
   it("persists panel activation under the authenticated run and recovers it across source replay", async () => {
+    await db.insert(plugins).values({ pluginKey: "example.live-view", packageName: "example-live-view", version: "1.0.0", status: "ready",
+      manifestJson: { ui: { slots: [{ type: "detailTab", id: "screen", entityTypes: ["agent"], taskSidePanel: { availabilityPath: "/agents/:entityId/ready" } }] } } as never });
     const identity = { ...CONTROL_PLANE_CONFORMANCE_OPEN.identity, runId: randomUUID(), sessionId: randomUUID() };
     const runnerId = randomUUID();
     await db.insert(heartbeatRuns).values({
@@ -426,10 +430,13 @@ describe("PaperclipControlPlanePort conformance", () => {
     });
     try { await port.appendEvent(event); } finally { unsubscribe(); }
     expect(notifications).toEqual(["task.panel.activated"]);
+    expect(await readTaskPanelActivations(db, identity.companyId, identity.runId)).toEqual([{ pluginKey: "example.live-view", slotId: "screen" }]);
     const restarted = new PaperclipControlPlanePort(db, replayBinding);
     expect((await restarted.appendEvent(event)).disposition).toBe("duplicate");
     const activations = await db.select().from(heartbeatRunEvents).where(eq(heartbeatRunEvents.runId, identity.runId));
     expect(activations.filter(row => row.eventType === "task.panel.activated")).toHaveLength(1);
+    expect(await readTaskPanelActivations(db, identity.companyId, CONTROL_PLANE_CONFORMANCE_OPEN.identity.runId)).toEqual([]);
+    expect(await readTaskPanelActivations(db, randomUUID(), identity.runId)).toEqual([]);
   });
 
   it("omits API credentials from persisted tool events and checkpoints without changing wire results", async () => {
