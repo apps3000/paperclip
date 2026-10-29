@@ -1,7 +1,7 @@
 # Historical unsafe workspace export recovery
 
 Current integration: 2026-10-29. Prepared parent: automatic completion-review
-retirement #17680 at published `181bf800a79449961e09c995f2785dd7f8060bb3`.
+retirement #17680 at actual squash `73d24aa5acfcf17b3f676b4da7cd05eb70b60b99`.
 Earlier draft parent: `be668fb975f119efeb4830405d4bb1ab65791f87`.
 Startup registers the worker when maintenance is enabled. The periodic reaper
 skips this duty. Explicit/manual recovery remains available. Fresh published-head
@@ -347,3 +347,15 @@ use supported external URLs with no source adaptation. The other 1779 cases
 in the large chat file are outside the focused selection and are not claimed.
 This does not claim the parent's full 274-case workflow was rerun on this slice.
 Publication remains held for the actual prerequisite merge and fresh CI/reviews.
+
+
+## Actual automatic-review squash ancestry
+
+Parent #17680 landed as `73d24aa5acfcf17b3f676b4da7cd05eb70b60b99`. Its whole tree
+equals reviewed parent `181bf800a79449961e09c995f2785dd7f8060bb3`, already present
+in this child history. Normal merge `6eb13207800b85d00e74a9803278d52e7a9fd890`
+resolves inspected duplicate squash-ancestry conflicts and preserves the entire
+accepted child tree. Complete server, package, UI and test trees remain equal
+to the accepted context source, including the entire 0410 database source.
+All original upgrade and suite evidence retains its stated scope. Fresh
+published-head CI and reviews remain required before merge.
