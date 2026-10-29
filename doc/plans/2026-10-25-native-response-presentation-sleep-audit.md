@@ -398,3 +398,87 @@ batch limits. All 18 affected cases pass against the retained history database
 from the full 1,602-case run (`/tmp/sleep48-settlement-history.log`), including
 single-query unrelated wakes, future deadlines, and coordinator retry release.
 The full-run failure remains recorded; fresh remote CI is still required.
+
+
+## Current migration 0412 integration and complete acceptance
+
+The original response-presentation patch is integrated with the validated current
+native-effect parent. The complete owned runtime/schema changes are preserved,
+including fourteen files with combined upstream edits and 10,401 unchanged
+unrelated upstream source files. The control-plane fixture conflict retains its
+dedicated external database path and the current recovery-helper fallback; all
+upstream conformance cases and owned assertions remain. Both audit histories
+are retained.
+
+Only this slice's unlanded migration artifacts were deferred before integration.
+`pnpm db:generate` generated `0412_tearful_squadron_supreme.sql`. The generated
+index definition was checked against the original index before restoring all
+three original statements byte for byte: concurrent idempotent index creation,
+selection statistics, and ANALYZE. No original tuning statement is dropped. All
+prior executable SQL, journal entries and retained snapshot bytes are unchanged.
+Five snapshots 0408 through 0412 remain; the concurrent allowlist includes 0412.
+
+Source `9feec170ef8174011fc3c5d3d6d76f0a0f39fea0` passes **4171 distinct cases
+in 29 complete files**, without skips: 2313 owner/producer/consumer cases in
+221.96 seconds, 59 safe-replacement cases in 29.10 seconds, and all 1799
+assembled chat integration cases in 769.87 seconds. This includes the complete
+GitHub workflow, accepted-response worker lifecycle, authenticated late evidence,
+outer commit/rollback, contention, authority registration, agent resume, startup,
+retry, drain/resume, and unrelated retained-history isolation. Per-file counts:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/__tests__/chat-channels.integration.test.ts | 1799 |
+| src/__tests__/committed-chat-response-authority.test.ts | 7 |
+| src/__tests__/issue-recovery-actions.test.ts | 89 |
+| src/__tests__/native-finalization-recovery.test.ts | 32 |
+| src/__tests__/native-interaction-bridge.test.ts | 7 |
+| src/__tests__/native-status-arbiter-corpus.test.ts | 94 |
+| src/__tests__/native-workspace-sync.test.ts | 10 |
+| src/__tests__/recovery-stale-issue-lock-sweep.test.ts | 40 |
+| src/__tests__/server-startup-feedback-export.test.ts | 69 |
+| src/__tests__/slack-conversation-lifecycle.test.ts | 41 |
+| src/modules/run-dispatch/adapters/postgres.test.ts | 69 |
+| src/modules/wake-queue/adapters/postgres.test.ts | 93 |
+| src/modules/wake-queue/adapters/queued-comment-postgres.test.ts | 5 |
+| src/services/chat-monitor-continuation.test.ts | 21 |
+| src/services/execution-control-reconciliation.test.ts | 10 |
+| src/services/explicit-native-continuation.test.ts | 335 |
+| src/services/heartbeat/queue.test.ts | 32 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/services/heartbeat/run-control.test.ts | 51 |
+| src/services/heartbeat/run-lifecycle.test.ts | 34 |
+| src/services/heartbeat/upgrade-readiness.test.ts | 7 |
+| src/services/legacy-execution-recovery.test.ts | 15 |
+| src/services/native-runtime/native-restart-recovery.test.ts | 25 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/services/native-runtime/native-safe-replacement.test.ts | 59 |
+| src/services/native-runtime/native-session-executor.test.ts | 968 |
+| src/services/native-runtime/native-workspace-export-retry.test.ts | 80 |
+| src/services/native-runtime/native-workspace-reconstruction.test.ts | 50 |
+| src/services/native-runtime/paperclip-control-plane-port.test.ts | 55 |
+
+The complete 94-case status-authority corpus also passes again on the same
+database in 16.68 seconds. It is not double-counted. Three retained PSC/OUT and
+sentinel company rows remain unchanged, and each invocation uses distinct
+UUID-derived fixture prefixes. Twenty-four separate fresh PostgreSQL 17
+databases migrate through 0412 before setup. Four embedded-only fixture imports
+temporarily use their own external database on this IPC-exhausted host, then
+restore byte for byte. All assertions and timing limits remain unchanged. This
+is qualified external-database acceptance, not an unmodified embedded CI run.
+
+Actual database build, server types/build, module boundaries and exact-head
+migration order pass. A populated 0411-to0412 upgrade preserves all 410 prior
+migration receipts and all 38 companies, appends exactly one receipt, and adds
+none on replay. The partial index is valid and ready on both fresh and upgraded
+databases; the existing selection statistic is present. Earlier failed runs
+above retain their historical scopes and explanations. The current complete
+chat run passes, rather than substituting a focused retry for the full suite.
+
+Normal merge `1c019b48c98cd8273aa3b7e3cf95433a369b9531` adopts published native-effect
+parent `5bb5ddacd3d1e6817de4825b283c6e92f85bd124` and actual unsafe-export ancestry.
+All complete server, package, UI and test trees remain identical to the accepted
+source. Publication remains held until #17690 lands and its actual squash
+ancestry is reconciled. Fresh published-head CI and exact-head Greptile 5/5
+remain required. These checks do not establish deployed suspension, external
+Cloud alarm delivery or fleet savings.
