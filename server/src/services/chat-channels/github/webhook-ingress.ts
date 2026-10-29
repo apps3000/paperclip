@@ -1252,9 +1252,9 @@ export function createGitHubWebhookIngress(db: Db, options: GitHubWebhookIngress
           appToken,
           cursor,
         });
-        // GitHub's official recovery recipe uses newest-first pagination
-        // and stops at the age floor. Reject observed ordering drift rather
-        // than assuming unseen pages cannot contain a successful sibling.
+
+
+
         for (const attempt of result.deliveries) {
           const timestamp = Date.parse(attempt.deliveredAt);
           if (timestamp > previousTimestamp)
@@ -1269,8 +1269,8 @@ export function createGitHubWebhookIngress(db: Db, options: GitHubWebhookIngress
         cursor = result.nextCursor;
         truncated = page === 2;
       }
-      // All pages in this time window are needed to rule out a successful
-      // sibling; do not act on a partial window after hitting the work cap.
+
+
       if (truncated) {
         outcome = "history_limit_reached";
         nextDelay = 5 * 60_000;
