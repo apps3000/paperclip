@@ -241,3 +241,22 @@ remains unpublished. A tree-only probe predicts text conflicts after the pending
 instruction parent is squashed, so publication waits for its actual merge and
 normal ancestry reconciliation. The probe is not a live merge proof or a reason
 to bypass any gate.
+
+## Actual instruction parent landed; publication ready
+
+Parent #17670 merged as `b294de546bf9cd3a8578a7a66d7e8ec0eb939799` with all
+58 checks and both current-head reviews at 5/5. Its entire tree equals the
+already-adopted reviewed parent `915ef6f20a68fffe89711cc97a6196521ea9885d`.
+A normal merge records the actual squash ancestry. The eleven predicted text
+conflicts came from duplicate history; the exact parent tree was already in the
+accepted branch ancestry. Resolving the inspected conflicts to the accepted
+versions leaves the **entire merge result tree identical** to the prior
+`c6f53662f4035a69d41f61f1759674de22f3163b`, including automatically merged files
+and the 0407 database tree. The integration is
+`531058e527fe4601958fbbf02ad2e7bbbf78af48`.
+
+All source covered by the 284-case acceptance remains byte-identical. This final
+follow-up changes documentation only. The actual target now contains migrations
+through 0406, and this slice adds only append-only 0407. Fresh review and CI must
+run on the published head; old draft scores are not current passes. No merge or
+instance-sleep completion is inferred from publication readiness.
