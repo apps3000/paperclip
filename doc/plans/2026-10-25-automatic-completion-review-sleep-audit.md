@@ -1,7 +1,7 @@
 # Automatic completion-review retirement
 
 Date: 2026-10-25; current integration: 2026-10-29. Parent: obsolete policy
-reviews #17679 at `7c4142d92fca6b6afcc806be8c52a615a62a418f`.
+reviews #17679 at actual squash `dfd5b1ac6205b6ec8f56752dfc5d3f9c02c26b6d`.
 The original draft parent was `e671c66bba6e9a42aa570826e6f3420dba199399`.
 
 ## One reason and its owner
@@ -194,9 +194,21 @@ All **462 distinct cases in seven complete files pass without skips**, in
 49.31 seconds. The full 72-case corpus then passes again on the same database
 in 12.95 seconds. Three preexisting PSC/OUT/sentinel rows remain unchanged in
 the inspected ID/name/prefix fields after both runs. Each invocation appends
-only its two uniquely named fixture companies. The repeat is not added again
+only its two fixture companies with distinct prefixes. The repeat is not added again
 to the distinct case count. Five fresh PostgreSQL 17 fixtures migrate through
 0409; database build, server types/build, boundaries and migration order pass.
 
 The actual prerequisite must still merge before publication. Fresh published-head
 CI and reviews remain required. No deployed sleep or external-alarm claim is made.
+
+
+## Actual obsolete-review squash ancestry
+
+Parent #17679 landed as `dfd5b1ac6205b6ec8f56752dfc5d3f9c02c26b6d`. Its whole tree
+equals reviewed parent `9aa67199da64d700fd6230829d38f2ef522a07fe`, already present
+in this child history. Normal merge `8c5c5da563e32b9a5520a4f8ddefc38c29b4755e`
+resolves inspected duplicate squash-ancestry conflicts and preserves the entire
+accepted child tree. Complete server, package, UI and test trees remain
+identical to the 462-case source and same-database 72-case repeat. The complete
+0409 database source remains exactly parent-identical. Fresh published-head
+CI and reviews remain required.
