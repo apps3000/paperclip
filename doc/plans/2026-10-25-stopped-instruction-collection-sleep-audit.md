@@ -203,3 +203,16 @@ index is valid and ready on both fresh and upgraded databases. This is local
 worker, producer and migration evidence; deployed host/database suspension and
 external Cloud wake coverage are separate. Actual landed parent ancestry and
 fresh current-head CI and reviews are still required before merge.
+
+
+## Reviewed parent and comment compliance
+
+The latest prepared directory-cleanup parent carries the published captured-save
+review correction. A normal merge changes parent audits and comment text only;
+every changed code file retains an identical non-comment TypeScript token stream
+and the complete database source tree remains unchanged. Four newly added
+comment lines in this slice's instruction-copy owner are removed under
+CONTRIBUTING.md. The staging/terminal-proof and fair-page explanations remain
+in this audit. No guard, query, assertion or deadline changes. The 1469-case
+acceptance retains its original scope; final actual-parent ancestry, current
+head CI and reviews are still required before publication and merge.
