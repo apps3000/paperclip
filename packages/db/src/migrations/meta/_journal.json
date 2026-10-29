@@ -2801,13 +2801,6 @@
       "when": 1793060791745,
       "tag": "0401_lumpy_talos",
       "breakpoints": true
-    },
-    {
-      "idx": 402,
-      "version": "7",
-      "when": 1793060791746,
-      "tag": "0402_shocking_molecule_man",
-      "breakpoints": true
     }
   ]
 }
