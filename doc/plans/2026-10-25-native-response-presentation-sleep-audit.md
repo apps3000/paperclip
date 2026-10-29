@@ -584,3 +584,17 @@ inbound traffic's ability to request that global reconstruction and prevents
 unscoped routine traffic from rebuilding dormant response history. It does not waive an actual review
 failure or establish deployed sleep, Cloud wake delivery or fleet savings.
 Fresh published-head CI, Greptile 5/5 and a clean security scan remain required.
+
+
+A second publication guard detected master #18128 at
+`e8b78cce5bb557b086bee9ca930eeaab1d09b244`. Normal merge
+`06d55ca9f872f7e7794680335811b496942be034` retains its three test-only file changes.
+Both complete owned and upstream binary patches are preserved. An isolated Git
+index projects only the owned audit onto the original repair source to prove
+this equality; it does not rewrite branch history or include master changes
+as owned edits. All 14 repair test hashes and the entire package tree remain
+unchanged. The changed HTTPS backfill case passes on a fresh 0412 PostgreSQL
+fixture in 7.62 seconds; 178 other workspace cases are outside that focused
+selection. Its embedded-only fixture import restores byte for byte. Combined
+server types/build, boundaries and migration order pass again. The independent
+browser fixture changes are preserved exactly; no local browser run is claimed.
