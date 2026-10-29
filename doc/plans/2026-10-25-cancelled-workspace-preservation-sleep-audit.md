@@ -145,3 +145,61 @@ this host's embedded harness was already proven unavailable in the parent slice.
 Exact-head remote CI and review remain required. This slice does not establish
 Cloud alarm coverage, host/database suspension or fleet savings, and it does
 not finish other native finalization/recovery duties.
+
+
+## Current parent integration and acceptance (2026-10-29)
+
+The existing slice adopts the updated stopped-collection parent by normal merge.
+The initial automatic proof rejected three source overlaps, rather than choosing
+a side. The resolved heartbeat facade retains both upgrade-readiness and worker
+registration imports. The recovery owner retains the upstream narrow projected
+input and plugin-task fence, with this slice's `requireCancelledStop` option and
+locked-row acknowledgement check. Both the exact original worker test block and
+the exact upstream superseded-retry test block are retained. Unrelated upstream
+blobs are preserved. A cached-diff whitespace warning belonged to an unchanged
+upstream routine-status file; the owned diff against the current parent is clean.
+
+Current source `8deb3941850e4c07744caceaccf30ad0f53abefd` passes **1472 cases across 16 complete files,
+with no skips**. The owner passes 84 cases, including the preserved superseded-
+retry coverage. Fifteen consumer files pass 1388 cases, including the complete
+968-case native session executor. Per-file counts follow:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/services/native-runtime/native-failed-workspace-recovery.test.ts | 84 |
+| src/services/native-runtime/native-session-executor.test.ts | 968 |
+| src/services/heartbeat/run-control.test.ts | 51 |
+| src/services/heartbeat/run-lifecycle.test.ts | 31 |
+| src/services/heartbeat/queue.test.ts | 32 |
+| src/modules/run-dispatch/adapters/postgres.test.ts | 69 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/__tests__/server-startup-feedback-export.test.ts | 59 |
+| src/__tests__/native-finalization-recovery.test.ts | 32 |
+| src/services/execution-control-reconciliation.test.ts | 10 |
+| src/modules/wake-queue/adapters/queued-comment-postgres.test.ts | 5 |
+| src/__tests__/native-workspace-sync.test.ts | 10 |
+| src/services/heartbeat/upgrade-readiness.test.ts | 7 |
+| src/services/native-runtime/native-restart-recovery.test.ts | 25 |
+| src/services/legacy-execution-recovery.test.ts | 15 |
+
+Eleven distinct fresh PostgreSQL databases were created and migrated before
+the fixtures. The preservation owner and native-session suite have different
+databases despite sharing the same environment-variable name. This avoids
+interpreting shared fixture cleanup as a product failure. Database build, server
+typecheck/build, module boundaries, target migration order, and all eleven fresh
+0407 migrations pass. Existing embedded fixtures remain real.
+
+Only this slice's unpublished 0401 artifacts were deferred before adopting parent
+history, then generated through `pnpm db:generate` as `0407_flaky_blob.sql`.
+The concurrent idempotent index SQL is byte-identical to the original. All prior
+SQL and journal entries and retained parent snapshots are unchanged; five newest
+snapshots 0403-0407 remain. The historical snapshot overlap uses exact parent
+bytes. No new code comments are added relative to the current parent.
+
+A populated 0406 database upgrades to 0407 with all 405 prior receipts identical
+and exactly one appended. Replay appends none. The preservation index is valid
+and ready on both fresh and upgraded databases. These checks establish combined
+worker, ownership and migration behavior, not deployed host/database suspension
+or external wake delivery. Actual landed parent ancestry and fresh published-head
+review and CI remain required. Prior failures above retain their original scope.
