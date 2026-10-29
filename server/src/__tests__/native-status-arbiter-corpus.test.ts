@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import {
   agents,
   agentWakeupRequests,
@@ -415,7 +415,14 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
     ]);
   }, 30_000);
 
-  afterAll(async () => { await db?.$client.end({ timeout: 1 }); await temporary?.cleanup(); });
+  afterAll(async () => {
+    try {
+      if (db) await db.delete(companies).where(inArray(companies.id, [companyId, outsideCompanyId]));
+    } finally {
+      await db?.$client.end({ timeout: 1 });
+      await temporary?.cleanup();
+    }
+  });
 
   async function seedFixture(fixture: Fixture) {
     const issueId = randomUUID();
