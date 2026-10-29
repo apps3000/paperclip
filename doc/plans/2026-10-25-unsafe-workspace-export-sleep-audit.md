@@ -1,7 +1,7 @@
 # Historical unsafe workspace export recovery
 
 Current integration: 2026-10-29. Prepared parent: automatic completion-review
-retirement #17680 at `e47a84ea044cc58b0b71d71e05ec877ae20f76af`.
+retirement #17680 at published `40f84082526d6ba405f206475c919c3b4b67ec4c`.
 Earlier draft parent: `be668fb975f119efeb4830405d4bb1ab65791f87`.
 Startup registers the worker when maintenance is enabled. The periodic reaper
 skips this duty. Explicit/manual recovery remains available. Fresh published-head
@@ -315,3 +315,14 @@ rejected-deletion failures remain recorded in the parent audit.
 The actual automatic-review prerequisite still must merge before publication.
 Fresh published-head CI and review are required, with existing sleep and
 external-wake limitations unchanged.
+
+
+## Published automatic-review parent
+
+Normal merge `6771a6c648c6ac1e9f0f73a91710d61bf5608aaf` adopts published parent
+`40f84082526d6ba405f206475c919c3b4b67ec4c`. All server, package, UI and test trees
+remain identical to the accepted child, including the 2188-case runtime/test
+scope, the additional 72-case corpus with its same-database repeat, and the
+complete 0410 database tree. Only parent documentation and ancestry change.
+Publication stays held until the actual automatic-review squash and its
+ancestry reconciliation. Fresh current-head CI and reviews remain required.
