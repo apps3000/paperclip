@@ -76,11 +76,13 @@ Shutdown joins active reads and does not start a cancellation after admission cl
 
 ## Migration
 
-`0398_breezy_mongu.sql` creates a partial ID index for scheduled retries with an
+`0406_zippy_war_machine.sql` creates a partial ID index for scheduled retries with an
 object cancellation fence. It uses concurrent, idempotent creation and is listed
 in the client's top-level migration set. It changes no rows or API contracts.
 The migration was generated through `pnpm db:generate`. Journal entries and SQL
-history remain intact; snapshots 0390 through 0394 are the retained newest five.
+history remain intact; snapshots 0402 through 0406 are the retained newest five.
+The initial unlanded draft used `0398_breezy_mongu.sql`; the later integration
+sections retain its history and explain append-only regeneration.
 Migration application, explicit replay, and migration validation passed.
 
 A rolled-back synthetic fixture with 10,000 completed rows and one candidate
