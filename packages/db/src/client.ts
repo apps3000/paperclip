@@ -555,10 +555,10 @@ const MIGRATIONS_WITH_TOP_LEVEL_STATEMENTS = new Set([
   "0401_yummy_ultimates.sql",
   "0402_ancient_malice.sql",
   "0403_natural_cerise.sql",
-  "0404_cynical_phil_sheldon.sql",
-  "0405_petite_frightful_four.sql",
-  "0406_gigantic_sunfire.sql",
-  "0407_flaky_blob.sql",
+  "0406_zippy_war_machine.sql",
+  "0407_greedy_star_brand.sql",
+  "0408_short_red_skull.sql",
+  "0409_uneven_zuras.sql",
 
 
   "0384_funny_adam_warlock.sql",

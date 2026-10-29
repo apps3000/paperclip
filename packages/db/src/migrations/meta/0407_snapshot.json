@@ -1,6 +1,6 @@
 {
-  "id": "9ca0f562-bf12-43a1-917e-09c8790e2a57",
-  "prevId": "79f47274-ec97-47f3-a8f6-396eef6009ee",
+  "id": "856a147c-73dc-4908-a8d9-4f19cab7dbf6",
+  "prevId": "c34fcd91-0d57-4241-b8b4-399bc9f6dcb0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2665,28 +2665,6 @@
         }
       },
       "indexes": {
-        "agent_instruction_copies_collection_idx": {
-          "name": "agent_instruction_copies_collection_idx",
-          "columns": [
-            {
-              "expression": "run_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "company_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "NOT (coalesce(\"agent_instruction_working_copies\".\"receipt\", '{}'::jsonb) ? 'retainedByRunId') AND (\n      (\"agent_instruction_working_copies\".\"attempts\" < 3 AND (\"agent_instruction_working_copies\".\"state\" IN ('prepared', 'pending_collection', 'unchanged_turn', 'warm_saved')\n        OR (\"agent_instruction_working_copies\".\"state\" = 'preparing' AND \"agent_instruction_working_copies\".\"receipt\"->>'schema' = 'paperclip.agent-files.v1')))\n      OR (\"agent_instruction_working_copies\".\"state\" = 'unavailable' AND \"agent_instruction_working_copies\".\"process_stopped_at\" IS NULL\n        AND \"agent_instruction_working_copies\".\"location\" LIKE 'remote:%' AND \"agent_instruction_working_copies\".\"receipt\"->>'schema' = 'paperclip.agent-files.v1'))",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "agent_instruction_copies_cleanup_idx": {
           "name": "agent_instruction_copies_cleanup_idx",
           "columns": [
@@ -33771,28 +33749,6 @@
         }
       },
       "indexes": {
-        "heartbeat_runs_cancelled_workspace_preservation_idx": {
-          "name": "heartbeat_runs_cancelled_workspace_preservation_idx",
-          "columns": [
-            {
-              "expression": "id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "company_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "where": "\"heartbeat_runs\".\"runtime_mode\" = 'native' AND \"heartbeat_runs\".\"status\" = 'cancelled'\n        AND \"heartbeat_runs\".\"runner_profile_json\"->'nativeWorkspaceSync'->>'state' = 'prepared'\n        AND \"heartbeat_runs\".\"result_json\"->'nativeCancellation'->>'dispatchState' = 'acknowledged'\n        AND (\"heartbeat_runs\".\"result_json\"->'workspaceRestoreRecovery'->>'schema' = 'paperclip.workspace-restore-recovery.v1'\n          AND \"heartbeat_runs\".\"result_json\"->>'workspaceRestoreFailure' IN ('restore_permission_denied', 'restore_lock_timeout', 'restore_unsafe_archive', 'restore_failed')) IS NOT TRUE",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "heartbeat_runs_retained_recovery_adoption_idx": {
           "name": "heartbeat_runs_retained_recovery_adoption_idx",
           "columns": [
@@ -39184,6 +39140,140 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.issue_thread_interaction_idempotency_keys": {
+      "name": "issue_thread_interaction_idempotency_keys",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "interaction_id": {
+          "name": "interaction_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "issue_thread_interaction_idempotency_keys_scope_key_uq": {
+          "name": "issue_thread_interaction_idempotency_keys_scope_key_uq",
+          "columns": [
+            {
+              "expression": "company_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "issue_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "issue_thread_interaction_idempotency_keys_interaction_idx": {
+          "name": "issue_thread_interaction_idempotency_keys_interaction_idx",
+          "columns": [
+            {
+              "expression": "interaction_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "issue_thread_interaction_idempotency_keys_company_id_companies_id_fk": {
+          "name": "issue_thread_interaction_idempotency_keys_company_id_companies_id_fk",
+          "tableFrom": "issue_thread_interaction_idempotency_keys",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issue_thread_interaction_idempotency_keys_issue_id_issues_id_fk": {
+          "name": "issue_thread_interaction_idempotency_keys_issue_id_issues_id_fk",
+          "tableFrom": "issue_thread_interaction_idempotency_keys",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "issue_thread_interaction_idempotency_keys_interaction_id_issue_thread_interactions_id_fk": {
+          "name": "issue_thread_interaction_idempotency_keys_interaction_id_issue_thread_interactions_id_fk",
+          "tableFrom": "issue_thread_interaction_idempotency_keys",
+          "tableTo": "issue_thread_interactions",
+          "columnsFrom": [
+            "interaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -60024,6 +60114,69 @@
       "indexes": {
         "user_sidebar_preferences_user_uq": {
           "name": "user_sidebar_preferences_user_uq",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_workspace_preferences": {
+      "name": "user_workspace_preferences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "coordinator_workspace_enabled": {
+          "name": "coordinator_workspace_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "user_workspace_preferences_user_uq": {
+          "name": "user_workspace_preferences_user_uq",
           "columns": [
             {
               "expression": "user_id",
