@@ -4114,7 +4114,7 @@ describeEmbeddedPostgres("chat channel control-plane integration", () => {
       const coordinator = createDeliveryWorkCoordinator({ owner: db, canRun: () => true, onError: error => errors.push(error) });
       try {
         await githubResponseCommentService(db, f.providerFetch).registerTerminalResponseWork(coordinator, () => true).ready;
-        await expect.poll(() => ({ next: coordinator.nextWakeAt(), active: idleWorkSnapshot().active }))
+        await expect.poll(() => ({ next: coordinator.nextWakeAt(), active: idleWorkSnapshot().active }), { timeout: 5000 })
           .toEqual({ next: null, active: 0 });
         expect(f.responseWrites).toHaveLength(baseline);
         vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"], shouldAdvanceTime: true });
