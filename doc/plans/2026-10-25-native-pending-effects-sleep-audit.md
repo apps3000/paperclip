@@ -1,7 +1,7 @@
 # Native pending status-effect recovery
 
 Branch: `codex/sleep-47-native-pending-effects`.
-Current prepared parent: #17687, `d64d307484633485716124b24ad8bbdbea61f399`.
+Current prepared parent: #17687, `2c6721445d2ec846c74bae1703be4ba02c47972b`.
 Original draft parent: `b9fe9e2e40ab48104cf18822b5302a740d1957a7`.
 Status: implemented and locally verified; remote PR acceptance remains required.
 
@@ -231,3 +231,22 @@ ancestry and parent documentation. Complete server, package, UI and test trees
 remain identical to the accepted source, including the whole 0411 database
 tree. Publication stays held for the actual unsafe-export prerequisite merge
 and ancestry reconciliation. Fresh published-head CI and reviews remain required.
+
+
+## Inherited CI correction checked in native-effect context
+
+Normal integration `5f7cd7bc589ad0169dfb5f33df611ead56510ca3` carries the
+upstream GitHub observation-bound correction and independent cleanup assertion.
+Only those two previously unselected test files and parent audits change.
+All production source, all packages including migration 0411, and all 25 files
+in the accepted 2284-case selection remain byte-identical. That acceptance and
+its 94-case same-database repeat retain their original source scope.
+
+Both focused native-presentation GitHub idle variants pass in 15.26 seconds.
+All six cases in the complete cleanup-removal suite pass in 8.47 seconds. Two
+separate fresh PostgreSQL 17 databases migrate through 0411; supported external
+URLs require no fixture source adaptation. The other 1779 cases in the large
+chat file are outside this focused selection. The full parent 274-case workflow
+is not claimed as executed here. The parent audit preserves the original CI
+failure and controlled comparison, including its limit on exact CI causality.
+Actual prerequisite ancestry and fresh published-head CI/reviews remain required.
