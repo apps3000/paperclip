@@ -1,7 +1,8 @@
 # Obsolete native policy-review cleanup
 
-Date: 2026-10-25. Parent: cancelled workspace preservation #17677 at
-`33567f91551d60053722c013f0d9b402c1db29e6`.
+Date: 2026-10-25; current integration: 2026-10-29. Parent: cancelled workspace
+preservation #17677 at `b34f0589847f33754ecde9413fd36bf007353d2c`.
+The original draft parent was `33567f91551d60053722c013f0d9b402c1db29e6`.
 
 ## Owner and scope
 
@@ -113,7 +114,7 @@ skips. Workspace typecheck and build also passed. Remote CI and review remain
 required for the published head. No workflow, lockfile or schema change is made.
 
 
-## Current parent and acceptance (2026-10-29)
+## Earlier parent and acceptance (2026-10-29)
 
 Normal integration with the verified cancelled-preservation parent yields
 `18809268f6292462bb8dc7aea4d081eca4851328`. Every substantive owned edit is preserved,
@@ -147,3 +148,27 @@ This verifies the combined cleanup owner, actual producer/transaction cases,
 status authority and affected consumers. It does not establish deployed sleep
 or Cloud alarms. Actual landed parent ancestry and fresh published-head review
 and CI remain required.
+
+
+## Current migration409 parent and complete acceptance
+
+Normal integration `4dff94ae9b261379b45c5b5e96a2bc7e8bbab772` preserves the
+complete original runtime patch and every unrelated upstream blob. The entire
+database source tree equals the current parent, including 0409 history and
+the five newest snapshots. No migration or table is added.
+
+All **443 cases across seven complete files pass without skips**, in 47.38
+seconds. The selection and per-file counts are unchanged from the table above.
+Five separate fresh PostgreSQL 17 databases migrate through 0409 before setup.
+Database build, server types/build, module boundaries and exact-head migration
+order pass. Existing supported external-database fixture paths are used; no
+source fixture adaptation or skipped suite is required. Prior failures remain
+recorded. These tests verify worker quiet and supported reactivation, not
+deployed host/database suspension or external alarms.
+
+Adopting published parent `b34f0589847f33754ecde9413fd36bf007353d2c` through normal merge
+`e57aa9ca1bbbac82ebb13e032487344f0ea4da1d` changes ancestry and parent documentation only.
+Complete server, package, test and UI trees remain identical to the accepted
+443-case source. The actual cancelled-preservation parent still must land.
+Publication is held until its squash ancestry is reconciled. Fresh published-head
+CI and reviews remain required.

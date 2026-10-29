@@ -292,8 +292,8 @@ describe.skipIf(!runControlPostgresSupport.supported)("heartbeat run-control dat
     let enter!: () => void, release!: () => void;
     const entered = new Promise<void>(resolve => { enter = resolve; });
     const held = new Promise<void>(resolve => { release = resolve; });
-    // Pause only the foreground caller. A separate recovery owner reads the
-    // committed fence and wins the real terminal CAS before this caller resumes.
+
+
     if (boundary === "task") {
       const getAgent = deps.getAgent.getMockImplementation()!;
       deps.getAgent.mockImplementationOnce(async id => { enter(); await held; return getAgent(id); });
