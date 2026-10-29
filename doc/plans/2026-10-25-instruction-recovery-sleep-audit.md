@@ -347,3 +347,18 @@ actual combined tree must preserve the complete owned patch and upstream changes
 The subsequent index-bearing child still needs the actual parent migration squash
 ancestry before publication. Old reviews on this slice's prior head do not count
 for the new published head.
+
+## Landed retry-cancellation squash ancestry
+
+Parent #17667 merged as `27270e9bf8b7a294cf03f8b84f4857f1b1ff05c7` after
+all 58 checks and both current-head reviews passed. Its entire tree equals the
+already-adopted reviewed parent `405e533394b26215e22d0452e9b0207d3f784a79`.
+The ordinary merge probe still found nine overlapping text conflicts from the
+squashed ancestry. A normal merge records that actual ancestry. The exact parent
+was already an ancestor of the accepted descendant; restoring the accepted
+versions of the inspected conflicts leaves the **entire result tree identical**
+to the previously published `fc5cee9fa00923a2d6fba27386ad7a6ab0ef101e`.
+This proves all automatic and manual resolutions preserve tested code and parent
+changes. The follow-up here changes documentation only. The 268-case source
+acceptance and database proofs remain applicable, but the new SHA needs fresh
+CI and exact-head reviews. Prior stacked-head results are not reused as passes.
