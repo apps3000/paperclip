@@ -220,3 +220,24 @@ The cleanup index is valid and ready on both fresh and upgraded databases. These
 results supersede the earlier local 0405 preparation after master's migration
 history advanced. No new published head or current-head review pass is implied;
 parent squash ancestry and new published-head gates remain required.
+
+## Published bounded-parent consumer acceptance
+
+A normal merge carries the updated instruction-recovery parent and its bounded
+retry-cancellation dependency. Both complete patches and every unrelated upstream
+blob are preserved. Source `70a6800eea874bdb87685bf6eea66de79c48b577` passes all
+**284 cases in six complete files**, without skips, in 48.88 seconds. Four new
+PostgreSQL 17 databases migrated through 0407 isolate the fixtures. The temporary
+external lifecycle fixture is restored exactly; all original assertions and
+limits remain unchanged. Actual database build, types/build, boundaries and exact
+current migration order pass. The complete 0407 database tree is unchanged from
+the populated-upgrade proof above.
+
+Adopting published parent `915ef6f20a68fffe89711cc97a6196521ea9885d` records the
+actual 0406 parent squash ancestry. The resulting integration
+`d8edcd131924b1ad744e232df9b548cf02b1e249` changes only the parent's audit;
+complete server, package, UI and test trees equal the accepted source. This slice
+remains unpublished. A tree-only probe predicts text conflicts after the pending
+instruction parent is squashed, so publication waits for its actual merge and
+normal ancestry reconciliation. The probe is not a live merge proof or a reason
+to bypass any gate.
