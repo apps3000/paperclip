@@ -178,3 +178,25 @@ trees remain identical to accepted source `27378007cd64c308f41940097a999d51201b8
 including the whole 0409 database tree. The 462-case acceptance retains its
 original scope. Publication remains held until the actual obsolete-review merge
 and ancestry reconciliation. Fresh current-head CI and review remain required.
+
+
+## Inherited corpus repeatability correction
+
+Published obsolete-review parent `9aa67199da64d700fd6230829d38f2ef522a07fe`
+carries the verified two-value fixture prefix correction. Normal integration
+`3f4d35ac0154aedc76cc39486d3758c73b1e6ff4` changes only those two corpus
+fixture values and parent documentation/ancestry. All production source, other
+test files and the complete 0409 database tree remain unchanged. The parent's
+audit retains the collision reproduction and rejected foreign-key cleanup
+attempt. No assertion, timing limit, teardown or worker behavior changes.
+
+All **462 distinct cases in seven complete files pass without skips**, in
+49.31 seconds. The full 72-case corpus then passes again on the same database
+in 12.95 seconds. Three preexisting PSC/OUT/sentinel rows remain unchanged in
+the inspected ID/name/prefix fields after both runs. Each invocation appends
+only its two uniquely named fixture companies. The repeat is not added again
+to the distinct case count. Five fresh PostgreSQL 17 fixtures migrate through
+0409; database build, server types/build, boundaries and migration order pass.
+
+The actual prerequisite must still merge before publication. Fresh published-head
+CI and reviews remain required. No deployed sleep or external-alarm claim is made.
