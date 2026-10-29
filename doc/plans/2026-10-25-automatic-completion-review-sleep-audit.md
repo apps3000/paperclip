@@ -110,3 +110,39 @@ Final affected-consumer verification passed all 235 tests without skips; togethe
 with the owner/startup/timing selection, 370 local tests passed. Workspace
 typecheck and build passed. The two initial typechecks and final checks all
 passed; no failed selection was discarded. Remote gates are pending.
+
+
+## Current parent and acceptance (2026-10-29)
+
+A normal merge adopts the verified obsolete-policy cleanup parent and current
+recovery source. All substantive owned edits and unrelated upstream blobs are
+preserved. The complete database source tree equals the parent: no migration,
+table or executable history change is added, and the parent 0407 history with
+five newest snapshots remains. No new code comments are added.
+
+Source `0d9087775b54dc7272bcae51345ff690e3407235` passes **462 cases across seven complete
+files, no skips**, in 49.57 seconds. The status-authority corpus runs both review
+workers against the lifecycle contract. Fixtures nested inside its matrix case
+are not counted again. Exact file counts:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/services/native-runtime/external-chat-wait.integration.test.ts | 234 |
+| src/__tests__/native-status-arbiter-corpus.test.ts | 72 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/__tests__/chat-run-milestone-governed-work.test.ts | 16 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/__tests__/server-startup-feedback-export.test.ts | 63 |
+| src/services/native-runtime/native-finalization-reconciler-timing.test.ts | 3 |
+
+Five separate fresh PostgreSQL 17 databases are migrated before corpus, recovery,
+finalizer, external-chat and governed-milestone fixture setup. All selected suites
+use their supported external URL path; none is skipped because this host cannot
+allocate another embedded cluster. Database build, server typecheck/build, module
+boundaries, target migration order and all five fresh parent-0407 migrations pass.
+The previous slice's circular-scope-payload failure remains recorded in its
+owning audit and is not erased by these passes.
+
+These checks establish current cleanup, authority and affected-consumer behavior,
+not deployed host/database suspension or external alarms. Actual landed parent
+ancestry and fresh published-head review and CI remain required.
