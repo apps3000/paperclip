@@ -389,8 +389,8 @@ describe("P6-31 Section 18.13 executable status-authority corpus", () => {
     const external = resolveExternalTestDatabaseUrl("PAPERCLIP_STATUS_CORPUS_TEST_DATABASE_URL");
     if (!external) temporary = await startEmbeddedPostgresTestDatabase("paperclip-status-corpus-");
     db = createDb(external ?? temporary!.connectionString);
-    await db.insert(companies).values({ id: companyId, name: "Status corpus", issuePrefix: "PSC" });
-    await db.insert(companies).values({ id: outsideCompanyId, name: "Outside corpus", issuePrefix: "OUT" });
+    await db.insert(companies).values({ id: companyId, name: "Status corpus", issuePrefix: `PSC${companyId.replaceAll("-", "").toUpperCase()}` });
+    await db.insert(companies).values({ id: outsideCompanyId, name: "Outside corpus", issuePrefix: `OUT${outsideCompanyId.replaceAll("-", "").toUpperCase()}` });
     await db.insert(agents).values([
       {
         id: agentId,

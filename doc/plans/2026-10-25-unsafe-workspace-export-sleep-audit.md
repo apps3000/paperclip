@@ -1,10 +1,11 @@
 # Historical unsafe workspace export recovery
 
-Status: implementation in progress on `codex/sleep-46-unsafe-export-recovery`.
-Parent: slice 45, commit `be668fb975f119efeb4830405d4bb1ab65791f87`, PR #17680.
-The parent has 53 successful gates and a 5/5 review at that head. This slice has
-not been published. Startup now registers the worker when maintenance is enabled;
-the periodic reaper skips this duty. Explicit/manual recovery remains available.
+Current integration: 2026-10-29. Prepared parent: automatic completion-review
+retirement #17680 at `e47a84ea044cc58b0b71d71e05ec877ae20f76af`.
+Earlier draft parent: `be668fb975f119efeb4830405d4bb1ab65791f87`.
+Startup registers the worker when maintenance is enabled. The periodic reaper
+skips this duty. Explicit/manual recovery remains available. Fresh published-head
+CI and review gates remain required; older parent scores do not prove them.
 
 ## Problem and owner
 
@@ -128,10 +129,10 @@ unsafe terminal-failure state, reduced these measurements to 0.105 ms and
 local fixture timings, not deployment latency or fleet cost claims. Dormant
 unsafe history still requires eligibility evaluation when its scope changes.
 
-Migration `0402_shocking_molecule_man.sql` creates the index concurrently with
+Current migration `0410_freezing_kinsey_walden.sql` creates the index concurrently with
 `IF NOT EXISTS` through the existing top-level migration runner. Fresh database
 application, migration replay, direct SQL replay, and ready/valid index inspection
-passed. The generated snapshot set retains 0394–0398. Historical SQL and journal
+passed. The current generated snapshot set retains 0406–0410. Historical SQL and journal
 entries remain intact. The index adds write/storage cost only for matching rows.
 
 ## Evidence and preserved failures
@@ -210,3 +211,107 @@ export-owner tests and 63 startup tests passed. The first combined rerun failed
 export fixture setup because the reused database retained its fixed company
 prefix; the complete export suite subsequently passed on a fresh dedicated
 database. Final integrated typecheck, build, and remote checks remain required.
+
+
+## Current migration410 integration and complete acceptance
+
+Only this slice's unlanded 0402 migration artifacts were deferred before a
+normal merge of the current automatic-review parent. There are no conflicts.
+The complete original runtime/schema patch and every unrelated upstream blob
+are preserved. The migration directory and client matched the exact parent
+before generation. `pnpm db:generate` generated
+`0410_freezing_kinsey_walden.sql`. Its concurrent, idempotent SQL is byte-identical
+to the original. All prior SQL, journal entries and retained snapshot bytes
+remain unchanged, with five snapshots 0406 through 0410. Nine newly added
+comment lines in two files were removed under CONTRIBUTING.md. The full
+non-comment TypeScript token streams are identical. The explanations above
+retain the notice-retirement, omission barrier and diagnostic ownership facts.
+
+Source `2a13dd08a6cc52f0adab09e3df9ce31e97b746b9` passes **2188 cases across
+24 complete files**, without skips. The main selection passes 2129 cases in
+192.58 seconds; the independent safe-replacement suite passes 59 in 26.04
+seconds. The selection covers real export and recovery-action producers,
+workspace reconstruction, explicit continuation, interaction routing, Stop,
+queue admission, Slack and all 968 native-session cases. Per-file counts:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/__tests__/issue-recovery-actions.test.ts | 89 |
+| src/__tests__/native-finalization-recovery.test.ts | 32 |
+| src/__tests__/native-interaction-bridge.test.ts | 7 |
+| src/__tests__/native-workspace-sync.test.ts | 10 |
+| src/__tests__/recovery-stale-issue-lock-sweep.test.ts | 40 |
+| src/__tests__/server-startup-feedback-export.test.ts | 65 |
+| src/__tests__/slack-conversation-lifecycle.test.ts | 41 |
+| src/modules/run-dispatch/adapters/postgres.test.ts | 69 |
+| src/modules/wake-queue/adapters/postgres.test.ts | 93 |
+| src/modules/wake-queue/adapters/queued-comment-postgres.test.ts | 5 |
+| src/services/execution-control-reconciliation.test.ts | 10 |
+| src/services/explicit-native-continuation.test.ts | 335 |
+| src/services/heartbeat/queue.test.ts | 32 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/services/heartbeat/run-control.test.ts | 51 |
+| src/services/heartbeat/run-lifecycle.test.ts | 31 |
+| src/services/heartbeat/upgrade-readiness.test.ts | 7 |
+| src/services/legacy-execution-recovery.test.ts | 15 |
+| src/services/native-runtime/native-restart-recovery.test.ts | 25 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/services/native-runtime/native-safe-replacement.test.ts | 59 |
+| src/services/native-runtime/native-session-executor.test.ts | 968 |
+| src/services/native-runtime/native-workspace-export-retry.test.ts | 80 |
+| src/services/native-runtime/native-workspace-reconstruction.test.ts | 50 |
+
+Twenty separate fresh PostgreSQL 17 databases migrate through 0410 before
+setup. Destructive fixtures do not share databases. Four embedded-only test
+imports temporarily use their own external database on this IPC-exhausted
+host: interaction bridge, workspace reconstruction, Slack lifecycle and
+wake-queue PostgreSQL. They are restored byte for byte. All assertions and
+original timing limits remain unchanged. The lifecycle suite uses the supported
+external URL already added by this slice. This is qualified external-database
+acceptance, not an unmodified embedded CI reproduction. Actual database build,
+server types/build, module boundaries and exact-head migration order pass.
+
+A populated 0409-to0410 upgrade preserves all 408 prior migration receipts and
+all 38 companies, appends exactly one receipt and adds none on replay. The
+unsafe-export index is valid and ready on fresh and upgraded databases.
+
+These checks preserve all earlier failures recorded above and verify current
+worker, ownership and affected-consumer behavior. Publication remains held until
+the actual prerequisite merges and its ancestry is reconciled. Fresh
+current-head CI and reviews remain required. These tests do not establish
+deployed host/database suspension, external wake delivery or fleet savings.
+
+
+## Prepared parent carrying published cleanup ancestry
+
+Normal merge `57ddb838cc93d5d8d0e7f8a0c2d1a2beed8b4394` adopts prepared parent
+`790a27d28f23be0f436eb96a884dc7988ff10823`. Its source equals the prior accepted parent;
+only parent documentation and ancestry change. Complete server, package, UI
+and test trees remain identical to the accepted 2188-case source, including
+the whole 0410 database tree. Publication remains held for the actual
+automatic-review merge and fresh published-head CI and reviews.
+
+
+## Inherited corpus repeatability fix and source-preserving acceptance
+
+Normal integration `8f43c9f81fac23b50997e7f0e1d0d9cf383a8109` carries the
+verified prefix correction through the updated automatic-review parent. The
+only changed source file relative to the accepted child is the status-authority
+corpus: its two fixed prefix values now use their own company UUIDs. All
+production source, all packages including the complete 0410 database tree, and
+all 24 files in the accepted 2188-case selection remain byte-identical to their
+accepted source. No assertion, timing limit or teardown changes. The prior
+2188-case evidence retains that precise source scope.
+
+The additional complete 72-case status-authority corpus passes at this source
+in 14.00 seconds, then passes again on the same fresh 0410 database in 13.08
+seconds. Three retained PSC/OUT/sentinel company rows remain unchanged in the
+inspected ID/name/prefix fields after both runs; each invocation appends two
+distinct UUID-derived prefixes. Database build and exact-head migration order
+pass. This adds one independently checked file to the previous selection; the
+repeat is not counted again as distinct coverage. Previous collision and
+rejected-deletion failures remain recorded in the parent audit.
+
+The actual automatic-review prerequisite still must merge before publication.
+Fresh published-head CI and review are required, with existing sleep and
+external-wake limitations unchanged.

@@ -1,7 +1,8 @@
 # Automatic completion-review retirement
 
-Date: 2026-10-25. Parent: obsolete policy reviews #17679 at
-`e671c66bba6e9a42aa570826e6f3420dba199399`.
+Date: 2026-10-25; current integration: 2026-10-29. Parent: obsolete policy
+reviews #17679 at `7c4142d92fca6b6afcc806be8c52a615a62a418f`.
+The original draft parent was `e671c66bba6e9a42aa570826e6f3420dba199399`.
 
 ## One reason and its owner
 
@@ -110,3 +111,92 @@ Final affected-consumer verification passed all 235 tests without skips; togethe
 with the owner/startup/timing selection, 370 local tests passed. Workspace
 typecheck and build passed. The two initial typechecks and final checks all
 passed; no failed selection was discarded. Remote gates are pending.
+
+
+## Earlier parent and acceptance (2026-10-29)
+
+A normal merge adopts the verified obsolete-policy cleanup parent and current
+recovery source. All substantive owned edits and unrelated upstream blobs are
+preserved. The complete database source tree equals the parent: no migration,
+table or executable history change is added, and the parent 0407 history with
+five newest snapshots remains. No new code comments are added.
+
+Source `0d9087775b54dc7272bcae51345ff690e3407235` passes **462 cases across seven complete
+files, no skips**, in 49.57 seconds. The status-authority corpus runs both review
+workers against the lifecycle contract. Fixtures nested inside its matrix case
+are not counted again. Exact file counts:
+
+| Complete file | Passing cases |
+| --- | ---: |
+| src/services/native-runtime/external-chat-wait.integration.test.ts | 234 |
+| src/__tests__/native-status-arbiter-corpus.test.ts | 72 |
+| src/services/heartbeat/recovery.test.ts | 45 |
+| src/__tests__/chat-run-milestone-governed-work.test.ts | 16 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/__tests__/server-startup-feedback-export.test.ts | 63 |
+| src/services/native-runtime/native-finalization-reconciler-timing.test.ts | 3 |
+
+Five separate fresh PostgreSQL 17 databases are migrated before corpus, recovery,
+finalizer, external-chat and governed-milestone fixture setup. All selected suites
+use their supported external URL path; none is skipped because this host cannot
+allocate another embedded cluster. Database build, server typecheck/build, module
+boundaries, target migration order and all five fresh parent-0407 migrations pass.
+The previous slice's circular-scope-payload failure remains recorded in its
+owning audit and is not erased by these passes.
+
+These checks establish current cleanup, authority and affected-consumer behavior,
+not deployed host/database suspension or external alarms. Actual landed parent
+ancestry and fresh published-head review and CI remain required.
+
+
+## Current migration409 parent and complete acceptance
+
+Normal integration `27378007cd64c308f41940097a999d51201b8ba8` preserves the
+complete original runtime patch and all unrelated upstream blobs. The entire
+database source tree equals the current parent, with 0409 history and five
+newest snapshots unchanged. No migration or table is added.
+
+All **462 cases across seven complete files pass without skips**, in 49.75
+seconds. The selection and per-file counts match the preceding table. Five
+separate fresh PostgreSQL 17 databases migrate through 0409 before setup.
+Database build, server types/build, module boundaries and exact-head migration
+order pass. All suites use their supported external-database fixture path; no
+source adaptation or skipped suite is required. Earlier failures remain recorded.
+
+This proves current worker and affected consumer behavior, not deployed
+host/database suspension or Cloud alarms. Publication stays held until the
+actual prerequisite merge and squash ancestry reconciliation. Fresh current-head
+CI and reviews remain required before merge.
+
+
+## Published obsolete-review parent and actual preservation ancestry
+
+Normal merge `c0f3ada4c018943982731635c26d37c7bb4b9ad9` adopts published parent
+`45cb0d9ccc9b0c37068f56a709f16572bd7b7ddc`. It carries the actual cancelled-preservation
+squash ancestry and parent audit only. Complete server, package, UI and test
+trees remain identical to accepted source `27378007cd64c308f41940097a999d51201b8ba8`,
+including the whole 0409 database tree. The 462-case acceptance retains its
+original scope. Publication remains held until the actual obsolete-review merge
+and ancestry reconciliation. Fresh current-head CI and review remain required.
+
+
+## Inherited corpus repeatability correction
+
+Published obsolete-review parent `9aa67199da64d700fd6230829d38f2ef522a07fe`
+carries the verified two-value fixture prefix correction. Normal integration
+`3f4d35ac0154aedc76cc39486d3758c73b1e6ff4` changes only those two corpus
+fixture values and parent documentation/ancestry. All production source, other
+test files and the complete 0409 database tree remain unchanged. The parent's
+audit retains the collision reproduction and rejected foreign-key cleanup
+attempt. No assertion, timing limit, teardown or worker behavior changes.
+
+All **462 distinct cases in seven complete files pass without skips**, in
+49.31 seconds. The full 72-case corpus then passes again on the same database
+in 12.95 seconds. Three preexisting PSC/OUT/sentinel rows remain unchanged in
+the inspected ID/name/prefix fields after both runs. Each invocation appends
+only its two uniquely named fixture companies. The repeat is not added again
+to the distinct case count. Five fresh PostgreSQL 17 fixtures migrate through
+0409; database build, server types/build, boundaries and migration order pass.
+
+The actual prerequisite must still merge before publication. Fresh published-head
+CI and reviews remain required. No deployed sleep or external-alarm claim is made.
