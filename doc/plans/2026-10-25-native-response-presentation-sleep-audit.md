@@ -496,3 +496,91 @@ before publication. All accepted source, including the complete 0412 database
 tree and all 29 test files, remains byte-identical. The following edit records
 the ancestry proof. The 4171-case acceptance keeps its original source scope;
 fresh published-head CI and exact-head Greptile 5/5 are required.
+
+
+## 2026-10-29 review repair: routine hints cannot invalidate a company
+
+Superagent review of `a5648c92f4601fb72cec26b9ff2e99e40d502042` identified a
+real P2: coalesced inbound messages used a company-only milestone hint, and
+the new response fanout reconstructed every unpresented response in that
+company. Pending-effect settlement also used a company-only finalization hint.
+The current-head scan required action, so the branch was not merged. Greptile
+rated that head 5/5 but conditioned readiness on the later #17702 scoped
+pending-effect fix. That fix is included here; this slice no longer requires
+its later dependent PR to be independently correct.
+
+The repair keeps routine milestones and finalization hints from entering the
+response queue without an issue or run. Real coalescing names its already-known
+active run. Pending-effect settlement names the affected issue, covering older
+decisions on that issue. Retry promotion/cancellation retain their known run
+when older context omits an issue. Existing pending-effect and chat consumers
+keep their previous serialized hints; only response reconstruction is narrowed.
+
+Genuine company-wide authority changes remain supported through one explicit
+`notifyChatCompanyAuthorityChange` boundary. Sixteen existing mutation hooks in
+nine owning files use it: membership and board-claim restoration, Cloud actor
+membership repair, GitHub/Slack identity and sponsor changes, endpoint policy,
+resource enablement and connection configuration. They keep their original
+change predicates and transaction owners. Two issue-scoped resource/publication
+hooks remain issue-scoped. No transaction wrappers, queue tables, polling or
+new persisted bookkeeping are introduced. Dynamic milestone producers carry
+issue-bound interaction rows or typed recovery inputs.
+
+The ordinary coalescing regression first fails on the actual PostgreSQL writer:
+its settled hint has only the company instead of the active run. Two receiver
+regressions each issue three routine company hints against dormant response
+history and observe **12 response-history SELECTs**. Both must observe zero.
+A positive test restores suspended membership through the actual access owner
+and delivers the waiting response once; it passes before and after the repair.
+The unchanged four focused assertions pass after the fix. Assertion time limits
+are unchanged. These tests measure real driver SQL and persisted producer work.
+
+Repair source `2fc8b0614aaf9ac7337045de4ced7325f95edc45` passes **1821 distinct
+server cases**: 1496 in 13 complete suites in 110.63 seconds, and 325 selected
+chat cases in 278.99 seconds. The chat selection includes the complete GitHub
+workflow, accepted-response lifecycle, the new regressions, and real post-close
+authority restoration. Another 1477 chat cases are outside the name pattern;
+the complete 1802-case file is not claimed for this repair run. Counts:
+
+| File | Passing cases |
+| --- | ---: |
+| src/__tests__/access-service.test.ts | 18 |
+| src/__tests__/auth-session-route.test.ts | 12 |
+| src/__tests__/board-claim.test.ts | 3 |
+| src/__tests__/chat-channels.integration.test.ts (focused) | 325 |
+| src/__tests__/committed-chat-response-authority.test.ts | 7 |
+| src/__tests__/native-finalization-recovery.test.ts | 32 |
+| src/__tests__/native-status-arbiter-corpus.test.ts | 94 |
+| src/__tests__/server-startup-feedback-export.test.ts | 69 |
+| src/modules/run-dispatch/adapters/postgres.test.ts | 69 |
+| src/modules/wake-queue/adapters/postgres.test.ts | 94 |
+| src/modules/wake-queue/application/use-cases.test.ts | 67 |
+| src/services/heartbeat/run-lifecycle.test.ts | 34 |
+| src/services/native-runtime/native-run-finalizer-telemetry.test.ts | 29 |
+| src/services/native-runtime/native-session-executor.test.ts | 968 |
+
+Eleven dedicated fresh PostgreSQL 17 databases migrate through unchanged 0412.
+The wake-queue fixture's embedded-only import temporarily uses its own external
+database and restores byte for byte. All 14 selected source files match their
+pre-run hashes. Actual database build, server types/build, module boundaries
+and full-SHA migration order pass. The earlier 4171-case full baseline keeps
+its original pre-repair source scope; it is not represented as this repair run.
+
+Master independently advanced to `522c653d562a41ecad64561d35457cb99ecf6cd6`
+with #18126's Pi archive-download retry fix. Normal merge
+`2a535bc61259ef99387369e8b32498f774e5ba2c` preserves both complete binary patches.
+All accepted server, database, UI, test and CLI trees remain identical; only
+the three independently changed runner installer/manifest files are added.
+All 13 installer tests pass in 200.18 milliseconds, including stalled-header
+and stalled-body cancellation. Combined server types/build, boundaries and
+migration order pass. No unrelated upstream source is discarded.
+
+Explicit global authority invalidation and startup still reconstruct their
+company's owed candidates with existing 100-row discovery pages and fair
+execution batches. Discovery retains linear time and memory; it is not a
+constant-cost global operation. The prior 10,001-candidate profile remains
+relevant to those genuine global obligations. This repair removes ordinary
+inbound traffic's ability to request that global reconstruction and prevents
+unscoped routine traffic from rebuilding dormant response history. It does not waive an actual review
+failure or establish deployed sleep, Cloud wake delivery or fleet savings.
+Fresh published-head CI, Greptile 5/5 and a clean security scan remain required.
