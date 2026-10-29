@@ -233,3 +233,47 @@ ancestry before this slice publishes 0404. No production or test code changed.
 The required #17666 parent still must merge before this slice. Publishing the
 stacked branch allows its independent CI and review to run while that parent
 finishes; it does not authorize merging into the unmerged parent.
+
+## Current master integration after webhook recovery merged
+
+Parent #17666 merged as `7afee8f0622e273d10506b0febfb68f143d168b1`.
+Master also gained the Coordinator workspace and prepared Runner changes. These
+landed migrations 0404 and 0405 while this PR's prior 0404 was still unmerged.
+Only this slice's unlanded migration artifacts were deferred. A normal merge
+preserved every original runtime and schema edit, all unrelated upstream blobs,
+and the exact parent migration tree. The repeated conflict in the shared stack
+inventory retained the existing slice39 historical section; no runtime conflict
+was resolved by choosing a side. The actual parent squash ancestry is recorded,
+and its complete tree matches the tested normal parent composition.
+
+The existing partial index was then generated as
+`0406_zippy_war_machine.sql`. Its concurrent, idempotent SQL bytes equal the
+original owned migration. Every landed SQL file, prior journal entry, and retained
+snapshot stays unchanged. The final snapshot set is 0402 through 0406. Four new
+comment lines were removed to follow contributor rules; both files retain the
+same complete non-comment TypeScript token streams.
+
+At `66107ae0a7ad85fd0476f91c4f8f98ae74a7a048`, all **362 cases in ten complete
+files** pass, with no skipped cases, in 61.86 seconds. Seven separate fresh
+PostgreSQL 17 databases prevent destructive fixture interference. Five fixtures
+use their existing external URL paths. The two embedded-only lifecycle and native
+cancellation fixtures temporarily used separate pre-migrated external databases
+because this host cannot start more embedded clusters. Only their fixture imports
+and native client teardown changed during that local run. All assertions and
+original timing limits stayed intact. Both test files were restored byte for
+byte afterward. This is a qualified external-database acceptance run, not an
+unmodified embedded or CI-environment reproduction. Published CI keeps the
+original embedded fixtures and must pass on the new head.
+
+Database build, server types/build, module boundaries, migration order, and all
+seven fresh 0406 migration runs pass. A populated 0405 database retains all 404
+prior migration receipts and all 300 companies, adds exactly one receipt, and
+adds none on replay. The partial index is valid and ready on upgraded and fresh
+databases. Earlier failures, including the old head's unexplained decision-expiry
+CI assertion and later successful single retry, remain in the evidence ledger.
+The initial draft metadata equality probe and a short-SHA validation-command usage
+error were rejected and corrected before acceptance; neither was a product pass.
+
+The previously green `9388f8c020d6f73d681cb1d183193f79754b324c` review and CI
+are historical. The new published head requires fresh CI and exact-head Greptile
+5/5. These results do not establish deployed host or database suspension.
